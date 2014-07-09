@@ -150,6 +150,7 @@ def install_lastz(install_path, executable_path=None):
 	#Untar 
 	tar_handle = tarfile.open(lastz_archive_path, 'r')
 	tar_handle.extractall(install_path)
+	tar_handle.close()
 	#Get path to scr directory in archive
 	version = re.match(r"lastz-(\d+\.\d+\.\d+)\.tar\.gz", os.path.basename(lastz_archive_path)).group(1)
 	scr_path = os.path.join(install_path, "lastz-distrib-%s" % version, "src")
@@ -161,13 +162,37 @@ def install_lastz(install_path, executable_path=None):
 		subprocess.call(["make"], stdout = runtime_output_handle, stderr = subprocess.STDOUT)
 		subprocess.call(["make", "install"], stdout = runtime_output_handle, stderr = subprocess.STDOUT)
 		test_output = subprocess.check_output(["make", "test"], stderr = subprocess.STDOUT)
-		if test_output == "" and "lastz" in os.listdir(install_path) and "lastz_D" in os.listdir(install_path):
-			print('Installation of lastz %s completed and verified. Executables are in "%s".' % (version, install_path))
+		if test_output == "" and "lastz" in os.listdir(executable_path) and "lastz_D" in os.listdir(executable_path):
+			print('Installation of lastz %s completed and verified. Executables are in "%s".' % (version, executable_path))
 		else:
 			print('Error detected during installation. Lastz might not have installed correctly')
 	
+def install_yasra(install_path, executable_path=None):
+	if executable_path == None:
+		executable_path = install_path
+	#Download 
+	yasra_archive_path = download_yasra(install_path)
+	#Untar 
+	tar_handle = tarfile.open(yasra_archive_path, 'r')
+	tar_handle.extractall(install_path)
+	tar_handle.close()
+	#Get path to scr directory in archive
+	version = re.match(r"YASRA-(\d+\.\d+)\.tar\.gz", os.path.basename(yasra_archive_path)).group(1)
+	scr_path = os.path.join(install_path, "YASRA-%s" % version)
+	#install
+	runtime_output_path = os.path.join(install_path, "yasra_compilation_runtime_output.txt")
+	with open(runtime_output_path, 'w') as runtime_output_handle:
+		os.chdir(scr_path)
+		subprocess.call(["./configure", "--prefix=%s" %	 install_path, "--bindir=%s" % executable_path], stdout = runtime_output_handle, stderr = subprocess.STDOUT)
+		subprocess.call(["make"], stdout = runtime_output_handle, stderr = subprocess.STDOUT)
+		subprocess.call(["make", "install"], stdout = runtime_output_handle, stderr = subprocess.STDOUT)
+		if "genomewalker" in os.listdir(executable_path):
+			print('Installation of yasra %s completed. Executables are in "%s".' % (version, executable_path))
+		else:
+			print('Missing files detected. yasra might not have installed correctly')
+
 def main(arguments):
-	install_lastz("/nfs/Grunwald_Lab/Foster/test")
+	install_yasra("/nfs/Grunwald_Lab/Foster/test")
 	
 if __name__ == '__main__':
 	sys.exit(main(sys.argv[1:]))
