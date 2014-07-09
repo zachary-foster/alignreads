@@ -1,0 +1,149 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import argparse
+import urllib2
+import re
+from urlparse import urlsplit, urlunsplit
+
+#From: http://codereview.stackexchange.com/questions/13027/joining-url-path-components-intelligently
+def url_path_join(*parts):
+	"""Normalize url parts and join them with a slash."""
+	def first(sequence, default=''):
+		return next((x for x in sequence if x), default)
+	schemes, netlocs, paths, queries, fragments = zip(*(urlsplit(part) for part in parts))
+	scheme = first(schemes)
+	netloc = first(netlocs)
+	path = '/'.join(x.strip('/') for x in paths if x)
+	query = first(queries)
+	fragment = first(fragments)
+	return urlunsplit((scheme, netloc, path, query, fragment))
+
+ 
+ 
+def get_links(url):
+	# From: http://www.diveintopython.net/html_processing/extracting_data.html
+	from sgmllib import SGMLParser
+	class url_lister(SGMLParser):
+		def reset(self):                              
+			SGMLParser.reset(self)
+			self.urls = []
+		def start_a(self, attrs):                    
+			href = [v for k, v in attrs if k=='href'] 
+			if href:
+				self.urls.extend(href)
+	url_handle = urllib2.urlopen(url)
+	link_parser = url_lister()
+	link_parser.feed(url_handle.read())
+	url_handle.close()
+	link_parser.close()
+	return [url for url in link_parser.urls]
+
+def get_yasra_versions(site_url):
+	files = get_links(site_url)
+	yasra_files = [f for f in files if re.match(r"YASRA-\d+\.\d+\.tar\.gz", f)]
+	return yasra_files
+	
+def download_yasra(install_path, file_name=None, interactive=True, recommended_version="YASRA-2.33.tar.gz"):
+	site_url = "http://www.bx.psu.edu/miller_lab/dist"
+	yasra_versions = get_yasra_versions(site_url)
+	yasra_versions.sort(key=lambda x: map(int, re.match(r"YASRA-(\d+\.\d+)\.tar\.gz", x).group(1).split('.')))
+	yasra_versions.reverse()
+	if interactive:
+		input_is_accepted = False
+		while input_is_accepted == False:
+			prompt_header = "Multiple versions of YASRA are available. Enter the number corresponding to the version you want to download..."
+			prompt_versions = ["   %d: %s" % (i + 1, yasra_versions[i]) for i in range(0, len(yasra_versions))]
+			if recommended_version in yasra_versions:
+				prompt_versions[yasra_versions.index(recommended_version)] += " (recommended)"
+			prompt_lines = [prompt_header] + prompt_versions
+			prompt = '\n'.join(prompt_lines)
+			user_input = raw_input(prompt + '\n')
+			try: 
+				user_selection = int(user_input)
+			except ValueError:
+				print("Invalid selection. Try again..")
+				continue
+			else:
+				input_is_accepted = True
+			version_to_download = yasra_versions[user_selection - 1]
+	else:
+		if recommended_version not in yasra_versions:
+			raise RuntimeError('Could not locate yasra version "%s" at "%s". You can try the interactive installation option to see if other versions are available.' % (recommended_version, site_url))
+		if yasra_versions[0] != recommended_version:
+			print('NOTE: the recommended version to be installed "%s" is not the newest version. "%s" appears to be the newest.' % (recommended_version, yasra_versions[0]))
+		version_to_download = recommended_version
+	if file_name == None:
+		file_name = version_to_download
+	version_to_download_url = url_path_join(site_url, version_to_download)
+	output_path = os.path.join(install_path, file_name)
+	download_handle = urllib2.urlopen(version_to_download_url)
+	with open(output_path, 'wb') as output_handle:
+		output_handle.write(download_handle.read())
+	download_handle.close()
+	return output_path
+
+def get_dev_lastz_versions(site_url):
+	files = get_links(site_url)
+	matches = [re.match(r".*(lastz-\d+\.\d+\.\d+\.tar\.gz)", f) for f in files]
+	lastz_files = [m.group(1) for m in matches if m]
+	return lastz_files
+
+def get_lastz_versions(site_url):
+	files = get_links(site_url)
+	lastz_files = [f for f in files if re.match(r"lastz-(\d+\.\d+\.\d+)\.tar\.gz", f)]
+	return lastz_files
+
+def download_lastz(install_path, file_name=None, interactive=True, recommended_version="lastz-1.03.02.tar.gz"):
+	old_site_url = "http://www.bx.psu.edu/miller_lab/dist"
+	dev_site_url = "http://www.bx.psu.edu/~rsharris/lastz/newer"
+	old_lastz_versions = get_lastz_versions(old_site_url)
+	dev_lastz_versions = get_dev_lastz_versions(dev_site_url)
+	lastz_versions = old_lastz_versions + dev_lastz_versions
+	print(lastz_versions)
+	lastz_versions.sort(key=lambda x: map(int, re.match(r"lastz-(\d+\.\d+\.\d+)\.tar\.gz", x).group(1).split('.')))
+	lastz_versions.reverse()
+	if interactive:
+		input_is_accepted = False
+		while input_is_accepted == False:
+			prompt_header = "Multiple versions of lastz are available. Enter the number corresponding to the version you want to download..."
+			prompt_versions = ["   %d: %s" % (i + 1, lastz_versions[i]) for i in range(0, len(lastz_versions))]
+			if recommended_version in lastz_versions:
+				prompt_versions[lastz_versions.index(recommended_version)] += " (recommended)"
+			prompt_lines = [prompt_header] + prompt_versions
+			prompt = '\n'.join(prompt_lines)
+			user_input = raw_input(prompt + '\n')
+			try: 
+				user_selection = int(user_input)
+			except ValueError:
+				print("Invalid selection. Try again..")
+				continue
+			else:
+				input_is_accepted = True
+			version_to_download = lastz_versions[user_selection - 1]
+	else:
+		if recommended_version not in lastz_versions:
+			raise RuntimeError('Could not locate lastz version "%s" at "%s". You can try the interactive installation option to see if other versions are available.' % (recommended_version, site_url))
+		if lastz_versions[0] != recommended_version:
+			print('NOTE: the recommended version to be installed "%s" is not the newest version. "%s" appears to be the newest.' % (recommended_version, lastz_versions[0]))
+		version_to_download = recommended_version
+	if file_name == None:
+		file_name = version_to_download
+	if version_to_download in old_lastz_versions:
+		version_to_download_url = url_path_join(old_site_url, version_to_download)
+	else:
+		version_to_download_url = url_path_join(dev_site_url, version_to_download)
+	output_path = os.path.join(install_path, file_name)
+	download_handle = urllib2.urlopen(version_to_download_url)
+	with open(output_path, 'wb') as output_handle:
+		output_handle.write(download_handle.read())
+	download_handle.close()
+	return output_path
+
+def main(arguments):
+	print(get_lastz_versions("http://www.bx.psu.edu/~rsharris/lastz/newer"))
+	download_lastz("/home/local/USDA-ARS/fosterz/test")
+	
+if __name__ == '__main__':
+	sys.exit(main(sys.argv[1:]))
