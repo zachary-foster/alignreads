@@ -97,6 +97,7 @@ def get_lastz_versions(site_url):
 	lastz_files = [f for f in files if re.match(r"lastz-(\d+\.\d+\.\d+)\.tar\.gz", f)]
 	return lastz_files
 
+
 def download_lastz(install_path, file_name=None, interactive=True, recommended_version="lastz-1.03.02.tar.gz"):
 	old_site_url = "http://www.bx.psu.edu/miller_lab/dist"
 	dev_site_url = "http://www.bx.psu.edu/~rsharris/lastz/newer"
@@ -142,11 +143,11 @@ def download_lastz(install_path, file_name=None, interactive=True, recommended_v
 	download_handle.close()
 	return output_path
 
-def install_lastz(install_path, executable_path=None):
+def install_lastz(install_path, executable_path=None, interactive=True,):
 	if executable_path == None:
 		executable_path = install_path
 	#Download 
-	lastz_archive_path = download_lastz(install_path)
+	lastz_archive_path = download_lastz(install_path, interactive=interactive)
 	#Untar 
 	tar_handle = tarfile.open(lastz_archive_path, 'r')
 	tar_handle.extractall(install_path)
@@ -167,11 +168,11 @@ def install_lastz(install_path, executable_path=None):
 		else:
 			print('Error detected during installation. Lastz might not have installed correctly')
 	
-def install_yasra(install_path, executable_path=None):
+def install_yasra(install_path, executable_path=None, interactive=True):
 	if executable_path == None:
 		executable_path = install_path
 	#Download 
-	yasra_archive_path = download_yasra(install_path)
+	yasra_archive_path = download_yasra(install_path, interactive=interactive)
 	#Untar 
 	tar_handle = tarfile.open(yasra_archive_path, 'r')
 	tar_handle.extractall(install_path)
@@ -191,8 +192,27 @@ def install_yasra(install_path, executable_path=None):
 		else:
 			print('Missing files detected. yasra might not have installed correctly')
 
+
+def download_mummer(install_path, file_name=None, interactive=True, recommended_version="YASRA-2.33.tar.gz"):
+	version = "3.23"
+	url = "http://sourceforge.net/projects/mummer/files/mummer/%s/MUMmer%s.tar.gz/download" % (version, version)
+	url_handle = urllib2.urlopen(url)
+	output_path = os.path.join(install_path, 'MUMmer%s.tar.gz' % version)
+	with open(output_path, 'wb') as output_handle:
+		output_handle.write(url_handle.read())
+	url_handle.close()
+	return output_path
+	'''
+	output_path = os.path.join(install_path, file_name)
+	download_handle = urllib2.urlopen(version_to_download_url)
+	with open(output_path, 'wb') as output_handle:
+		output_handle.write(download_handle.read())
+	download_handle.close()
+	return output_path'''
+
+
 def main(arguments):
-	install_yasra("/nfs/Grunwald_Lab/Foster/test")
+	download_mummer("/home/local/USDA-ARS/fosterz/test")
 	
 if __name__ == '__main__':
 	sys.exit(main(sys.argv[1:]))
