@@ -5,6 +5,8 @@ import sys
 import argparse
 import urllib2
 import re
+import subprocess
+import tarfile
 from urlparse import urlsplit, urlunsplit
 
 #From: http://codereview.stackexchange.com/questions/13027/joining-url-path-components-intelligently
@@ -101,7 +103,6 @@ def download_lastz(install_path, file_name=None, interactive=True, recommended_v
 	old_lastz_versions = get_lastz_versions(old_site_url)
 	dev_lastz_versions = get_dev_lastz_versions(dev_site_url)
 	lastz_versions = old_lastz_versions + dev_lastz_versions
-	print(lastz_versions)
 	lastz_versions.sort(key=lambda x: map(int, re.match(r"lastz-(\d+\.\d+\.\d+)\.tar\.gz", x).group(1).split('.')))
 	lastz_versions.reverse()
 	if interactive:
@@ -141,9 +142,32 @@ def download_lastz(install_path, file_name=None, interactive=True, recommended_v
 	download_handle.close()
 	return output_path
 
+def install_lastz(install_path, executable_path=None):
+	if executable_path == None:
+		executable_path = install_path
+	#Download 
+	lastz_archive_path = download_lastz(install_path)
+	#Untar 
+	tar_handle = tarfile.open(lastz_archive_path, 'r')
+	tar_handle.extractall(install_path)
+	#Get path to scr directory in archive
+	version = re.match(r"lastz-(\d+\.\d+\.\d+)\.tar\.gz", os.path.basename(lastz_archive_path)).group(1)
+	scr_path = os.path.join(install_path, "lastz-distrib-%s" % version, "src")
+	#install
+	runtime_output_path = os.path.join(install_path, "lastz_compilation_runtime_output.txt")
+	with open(runtime_output_path, 'w') as runtime_output_handle:
+		os.environ['LASTZ_INSTALL'] = executable_path
+		os.chdir(scr_path)
+		subprocess.call(["make"], stdout = runtime_output_handle, stderr = subprocess.STDOUT)
+		subprocess.call(["make", "install"], stdout = runtime_output_handle, stderr = subprocess.STDOUT)
+		test_output = subprocess.check_output(["make", "test"], stderr = subprocess.STDOUT)
+		if test_output == "" and "lastz" in os.listdir(install_path) and "lastz_D" in os.listdir(install_path):
+			print('Installation of lastz %s completed and verified. Executables are in "%s".' % (version, install_path))
+		else:
+			print('Error detected during installation. Lastz might not have installed correctly')
+	
 def main(arguments):
-	print(get_lastz_versions("http://www.bx.psu.edu/~rsharris/lastz/newer"))
-	download_lastz("/home/local/USDA-ARS/fosterz/test")
+	install_lastz("/nfs/Grunwald_Lab/Foster/test")
 	
 if __name__ == '__main__':
 	sys.exit(main(sys.argv[1:]))
