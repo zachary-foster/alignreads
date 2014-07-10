@@ -194,45 +194,29 @@ def install_yasra(install_path, executable_path=None, interactive=True):
 
 
 def get_mummer_versions(site_url):
-	url_patern = "http://sourceforge.net/projects/mummer/files/mummer/%s/MUMmer%s.tar.gz/download"
+	url_pattern = "http://sourceforge.net/projects/mummer/files/mummer/%s/MUMmer%s.tar.gz/download"
 	links = get_links(site_url)
-	pattern = url_path_join(site_url, r"(\d+\.\d+)")
-	link_matches = [re.match(pattern, x) for x in links]
-	lastz_versions = [m.group(1) for m in link_matches if m]
-	lastz_files = [url_pattern % (v,v) for v in lastz_versions]
-	return lastz_files
+	link_matches = [re.match(r"/projects/mummer/files/mummer/(\d+\.\d+)/", x) for x in links]
+	mummer_versions = list(set([m.group(1) for m in link_matches if m]))
+	mummer_files = [url_pattern % (v,v) for v in mummer_versions]
+	return (mummer_files, mummer_versions)
 
-def download_mummer(install_path, file_name=None, interactive=True, recommended_version="YASRA-2.33.tar.gz"):
-	version = "3.23"
-	url = "http://sourceforge.net/projects/mummer/files/mummer/%s/MUMmer%s.tar.gz/download" % (version, version)
-	url_handle = urllib2.urlopen(url)
-	output_path = os.path.join(install_path, 'MUMmer%s.tar.gz' % version)
-	with open(output_path, 'wb') as output_handle:
-		output_handle.write(url_handle.read())
-	url_handle.close()
-	return output_path
-	'''
-	output_path = os.path.join(install_path, file_name)
-	download_handle = urllib2.urlopen(version_to_download_url)
-	with open(output_path, 'wb') as output_handle:
-		output_handle.write(download_handle.read())
-	download_handle.close()
-	return output_path'''
-
-def download_mummer(install_path, file_name=None, interactive=True, recommended_version="lastz-1.03.02.tar.gz"):
+def download_mummer(install_path, file_name=None, interactive=True, recommended_version="3.23"):
 	version = "3.23"
 	url_patern = r"http://sourceforge.net/projects/mummer/files/mummer/\d+\.\d+/(\d+\.\d+)\.tar\.gz/download"
 	site_url = "http://sourceforge.net/projects/mummer/files/mummer/"
-	mummer_files = get_mummer_versions(site_url)
-	mummer_files.sort(key=lambda x: map(int, re.match(url_pattern, x).group(1).split('.')))
+	mummer_files, mummer_versions = get_mummer_versions(site_url)
+	mummer_files = sorted(mummer_files, key=lambda x: map(int, mummer_versions[mummer_files.index(x)].split('.')))
 	mummer_files.reverse()
+	mummer_versions.sort(key=lambda x: map(int, x.split('.')))
+	mummer_versions.reverse()
 	if interactive:
 		input_is_accepted = False
 		while input_is_accepted == False:
 			prompt_header = "Multiple versions of MUMmer are available. Enter the number corresponding to the version you want to download..."
-			prompt_versions = ["   %d: %s" % (i + 1, mummer_files[i].split('/')[-2]) for i in range(0, len(lastz_versions))]
-			if recommended_version in lastz_versions:
-				prompt_versions[lastz_versions.index(recommended_version)] += " (recommended)"
+			prompt_versions = ["   %d: %s" % (i + 1, mummer_files[i].split('/')[-2]) for i in range(0, len(mummer_versions))]
+			if recommended_version in mummer_versions:
+				prompt_versions[mummer_versions.index(recommended_version)] += " (recommended)"
 			prompt_lines = [prompt_header] + prompt_versions
 			prompt = '\n'.join(prompt_lines)
 			user_input = raw_input(prompt + '\n')
@@ -243,21 +227,19 @@ def download_mummer(install_path, file_name=None, interactive=True, recommended_
 				continue
 			else:
 				input_is_accepted = True
-			version_to_download = lastz_versions[user_selection - 1]
+			version_to_download = mummer_versions[user_selection - 1]
+			file_to_download = mummer_files[user_selection - 1]
 	else:
-		if recommended_version not in lastz_versions:
-			raise RuntimeError('Could not locate lastz version "%s" at "%s". You can try the interactive installation option to see if other versions are available.' % (recommended_version, site_url))
-		if lastz_versions[0] != recommended_version:
-			print('NOTE: the recommended version to be installed "%s" is not the newest version. "%s" appears to be the newest.' % (recommended_version, lastz_versions[0]))
+		if recommended_version not in mummer_versions:
+			raise RuntimeError('Could not locate MUMmer version "%s" at "%s". You can try the interactive installation option to see if other versions are available.' % (recommended_version, site_url))
+		if mummer_versions[0] != recommended_version:
+			print('NOTE: the recommended version to be installed "%s" is not the newest version. "%s" appears to be the newest.' % (recommended_version, mummer_versions[0]))
 		version_to_download = recommended_version
+		file_to_download = mummer_files[mummer_versions.index(recommended_version)]
 	if file_name == None:
-		file_name = version_to_download
-	if version_to_download in old_lastz_versions:
-		version_to_download_url = url_path_join(old_site_url, version_to_download)
-	else:
-		version_to_download_url = url_path_join(dev_site_url, version_to_download)
+		file_name = "MUMmer%s.tar.gz" % version_to_download
 	output_path = os.path.join(install_path, file_name)
-	download_handle = urllib2.urlopen(version_to_download_url)
+	download_handle = urllib2.urlopen(file_to_download)
 	with open(output_path, 'wb') as output_handle:
 		output_handle.write(download_handle.read())
 	download_handle.close()
@@ -265,7 +247,7 @@ def download_mummer(install_path, file_name=None, interactive=True, recommended_
 
 
 def main(arguments):
-	download_mummer("/home/local/USDA-ARS/fosterz/test")
+	print download_mummer("/home/local/USDA-ARS/fosterz/test", interactive=False, file_name="test.tar.gz")
 	
 if __name__ == '__main__':
 	sys.exit(main(sys.argv[1:]))
