@@ -245,6 +245,29 @@ def download_mummer(install_path, file_name=None, interactive=True, recommended_
 	download_handle.close()
 	return output_path
 
+def install_mummer(install_path, executable_path=None, interactive=True):
+	if executable_path == None:
+		executable_path = install_path
+	#Download 
+	archive_path = download_mummer(install_path, interactive=interactive)
+	#Untar 
+	tar_handle = tarfile.open(archive_path, 'r')
+	tar_handle.extractall(install_path)
+	tar_handle.close()
+	#Get path to scr directory in archive
+	version = re.match(r"MUMmer(\d+\.\d+)\.tar\.gz", os.path.basename(archive_path)).group(1)
+	scr_path = os.path.join(install_path, "MUMmer%s" % version)
+	#install
+	runtime_output_path = os.path.join(install_path, "mummer_compilation_runtime_output.txt")
+	with open(runtime_output_path, 'w') as runtime_output_handle:
+		os.chdir(scr_path)
+		subprocess.call(["make", "check"], stdout = runtime_output_handle, stderr = subprocess.STDOUT)
+		subprocess.call(["make", "install"], stdout = runtime_output_handle, stderr = subprocess.STDOUT)
+		'''if "genomewalker" in os.listdir(executable_path):
+			print('Installation of yasra %s completed. Executables are in "%s".' % (version, executable_path))
+		else:
+			print('Missing files detected. yasra might not have installed correctly')'''
+
 
 def main(arguments):
 	print download_mummer("/home/local/USDA-ARS/fosterz/test", interactive=False, file_name="test.tar.gz")
