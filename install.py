@@ -1,52 +1,56 @@
-### Imports ###
-import os, string, sys, time, copy, re
-from optparse import *
-from subprocess import *
-import logging
-######
+#!/usr/bin/env python
 
-### Variable Initialization ###
-logging.basicConfig()
-program_arguments = sys.argv #argument list supplied by user in its raw form
-minimum_argument_number = 1 #the smallest amount of arguments with which it is possible to run the script
-original_cwd = os.getcwd()
-program_name = 'install'
-program_version = '1.0.0'
-program_usage = 'python %s.py <Path to YASRA folder> [options]' % (program_name)
+"""
+Installs alignreads and its dependencies.
+"""
+#Generic Imports
+import os, string, sys, time, copy, re
+import argparse
+
+#Specific Imports
+import subprocess
+import logging
+
+#Change log
+change_log = [('1.0.0',		'First version of the script')]
+version = change_log[-1][0]
+
+#Constants
+program_description = "%s\nVersion: %s" % (__doc__, version)
 accepted_lastz_versions = ['1.3.2', '1.03.02']
 accepted_readtools_versions = ['1.0.0']
 accepted_makeconesnsus_versions = ['1.1.1']
 accepted_runyasra_versions = ['2.2.3']
 accepted_nucmer_versions = ['3.1']
-######
+installation_folder = os.path.abspath(os.getcwd())
+default_executable_folder = os.path.join(installation_folder, 'bin')
+
+#Initialization
+logging.basicConfig()
+
 
 ###Command Line Parser Initilization###
-command_line_parser = OptionParser(usage = program_usage, version = "Version %s" % program_version)
-command_line_parser.add_option("-l", '--lastz-location', action='store', default=None, type='string', metavar='PATH',\
-                               help="Specify the path to lastz. (Default: attempt to find automatically)")
-command_line_parser.add_option("-n", '--nucmer-location', action='store', default=None, type='string', metavar='PATH',\
-                               help="Specify the path to nucmer. (Default: attempt to find automatically)")
-command_line_parser.add_option("-p", '--python-location', action='store', default=None, type='string', metavar='PATH',\
-                               help="Specify the path to python. (Default: attempt to find automatically)")
-command_line_parser.add_option("-i", '--shell-init-file', action='store', default=None, type='string', metavar='PATH',\
-                               help="Specify the path to your .cshrc / .tcshrc file so the alignreads installation can be added to you search $PATH. (Default: attempt to find automatically)")
-(options, arguments) = command_line_parser.parse_args(sys.argv[1:])
-if len(arguments) == 0: #if no arguments are supplied
-    command_line_parser.print_help()
-    sys.exit(0)
-yasra_location = arguments[0]
-if os.path.exists(yasra_location) is False:
-    raise TypeError('Invalid path to YASRA: %s' % yasra_location)
-######
+command_line_parser = argparse.ArgumentParser(description=program_description)
+command_line_parser.add_argument('-i', '--not-interactive', default=True, action="store_false", dest="interactive",\
+                               help="Do not prompt user for input during installation. Recommended and default settings will be used unless otherwise specified by command line arguments.")
+command_line_parser.add_argument("-p", '--python', nargs='?', default=None,\
+                               help="Specify the path to nucmer. (Default: attempt to find path automatically). ")
+command_line_parser.add_argument("-n", '--nucmer', nargs='?', default=None,\
+                               help="Specify the path to nucmer. (Default: attempt to find path automatically). ")
+command_line_parser.add_argument("-l", '--lastz', nargs='?', default=False,\
+                               help="Specify the path to lastz. If the option is used, but no path given, an attempt will be made to find the path automatically. (Default: download and install automatically). ")
+command_line_parser.add_argument("-y", '--yasra', nargs='?', default=False,\
+                               help="Specify the path to YASRA. If the option is used, but no path given, an attempt will be made to find the path automatically. (Default: download and install automatically). ")
+command_line_parser.add_argument('-e', '--executable_path',\
+                               help='Path to store any automatically installed binaries.')
+arguments = command_line_parser.parse_args()
 
-### Validation of program paths ###
+#Validation of program paths
 def generic_program_validation(path, accepted_versions):
     try:
         name = os.path.split(path)[1]
-        process = Popen([path, "-v"], shell=False, stdout=PIPE, stdin=PIPE, stderr=STDOUT, close_fds=True)
-        process.wait()
-        output = process.stdout.read()
-        version = re.search('version ([0123456789.]*)', output).group(1)
+        output =  subprocess.check_output([path, "-v"], stderr = subprocess.STDOUT)
+        version = re.search('version ([0123456789.]+)', output).group(1)
         if version not in accepted_versions:
             raise TypeError("Wrong version of %s detected. Version found: '%s'.  Compatible Versions: '%s'" %\
                                                  (name, version, ", ".join(accepted_versions)))
@@ -55,40 +59,41 @@ def generic_program_validation(path, accepted_versions):
         raise
 
 def find_active_version(name):
-    process = Popen(['which', name], stdout=PIPE)
-    process.wait()
-    output = process.communicate()[0].strip()
-    if os.path.exists(output):
-        return output
+    path = subprocess.check_output(['which', name], stderr = subprocess.STDOUT)
+    if os.path.exists(path):
+		output =  subprocess.check_output([path, "-v"], stderr = subprocess.STDOUT)
+		version = re.search('version ([0123456789.]+)', output).group(1)
+        return (path, version)
     else:
         return None
 
-if options.lastz_location is None:
-    options.lastz_location = find_active_version('lastz')
-    if options.lastz_location is None:
-        raise TypeError('Cannot locate lastz. Use option -l/--lastz-location')
+if arguments.lastz is False:
+	install_lastz(install_path, executable_path=arguments.executable_path, interactive=arguments.interactive)
+elif arguments.lastz is None:
+    arguments.lastz, lastz_version = find_active_version('lastz')
+    if arguments.lastz is None:
+        raise TypeError('Cannot locate lastz. Specifcy location using option --lastz or omit option to download and install automatically.')
     else:
-        print "Found lastz at %s" % options.lastz_location
-generic_program_validation(options.lastz_location, accepted_lastz_versions)
+        print "Found lastz %s at %s" % (lastz_version, arguments.lastz)
+generic_program_validation(arguments.lastz, accepted_lastz_versions)
     
-if options.nucmer_location is None:
-    options.nucmer_location = find_active_version('nucmer')
-    if options.nucmer_location is None:
-        raise TypeError('Cannot locate nucmer. Use option -l/--nucmer-location')
+if options.nucmer is None:
+    options.nucmer, nucmer_version = find_active_version('nucmer')
+    if options.nucmer is None:
+        raise TypeError('Cannot locate nucmer. Specifcy location using option --nucmer.')
     else:
-        print "Found nucmer at %s" % options.nucmer_location
-generic_program_validation(options.nucmer_location, accepted_nucmer_versions)
+        print "Found nucmer %s at %s" % (nucmer_version, options.nucmer)
+generic_program_validation(options.nucmer, accepted_nucmer_versions)
 
-if options.python_location is None:
-    options.python_location = find_active_version('python')
-    if options.python_location is None:
+if options.python is None:
+    options.python, python_version = find_active_version('python')
+    if options.python is None:
         raise TypeError('Cannot locate python. Use option -l/--python-location')
     else:
-        print "Found python at %s" % options.python_location
+        print "Found python %s at %s" % (python_version, options.python)
 ######
 
 ### Unpack Installation ###
-installation_folder = os.path.abspath(os.getcwd())
 process = Popen(['tar', '-xvf', 'uninstalled_content.tar'], stdout=PIPE)
 process.wait()
 for name in os.listdir(os.path.join(installation_folder, 'uninstalled_content')):
@@ -101,9 +106,9 @@ config_path = os.path.join(installation_folder, 'default_configuration.py')
 with open(config_path, 'r') as config_handle:
     config = config_handle.read()
 config = config.replace('yasra_location = None', 'yasra_location = "%s"' % yasra_location)
-config = config.replace('nucmer_location = None', 'nucmer_location = "%s"' % options.nucmer_location)
-config = config.replace('python_location = None', 'python_location = "%s"' % options.python_location)
-config = config.replace('lastz_location = None', 'lastz_location = "%s"' % options.lastz_location)
+config = config.replace('nucmer_location = None', 'nucmer_location = "%s"' % options.nucmer)
+config = config.replace('python_location = None', 'python_location = "%s"' % options.python)
+config = config.replace('lastz_location = None', 'lastz_location = "%s"' % options.lastz)
 with open(config_path, 'w') as config_handle:
     config_handle.write(config)
 ######
