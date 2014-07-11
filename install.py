@@ -312,7 +312,8 @@ def install_mummer(install_path, executable_path=None, interactive=True):
 
 
 #Change log
-change_log = [('1.0.0',		'First version of the script')]
+change_log = [('1.0.0',		'First version of the script'),\
+				('1.1.0'	'Rewrote. Downloads and installes prerequisites')]
 version = change_log[-1][0]
 
 #Constants
