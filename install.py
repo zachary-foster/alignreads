@@ -10,6 +10,11 @@ import argparse
 #Specific Imports
 import subprocess
 import logging
+import urllib2
+import tarfile
+from urlparse import urlsplit, urlunsplit
+
+
 
 #Change log
 change_log = [('1.0.0',		'First version of the script')]
