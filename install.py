@@ -19,7 +19,8 @@ from urlparse import urlsplit, urlunsplit
 def generic_program_validation(path, accepted_versions):
 	try:
 		name = os.path.split(path)[1]
-		output =  subprocess.check_output([path, "-v"], stderr = subprocess.STDOUT)
+		process =  subprocess.Popen([path, "-v"], stderr = subprocess.STDOUT, stdout=subprocess.PIPE)
+		output = process.communicate()[0]
 		version = re.search('version ([0123456789.]+)', output).group(1)
 		if version not in accepted_versions:
 			raise TypeError("Wrong version of %s detected. Version found: '%s'.  Compatible Versions: '%s'" %\
@@ -31,7 +32,8 @@ def generic_program_validation(path, accepted_versions):
 def find_active_version(name):
 	path = subprocess.check_output(['which', name], stderr = subprocess.STDOUT).strip()
 	if os.path.exists(path):
-		output =  subprocess.check_output([path, "-v"], stderr = subprocess.STDOUT)
+		process =  subprocess.Popen([path, "-v"], stderr = subprocess.STDOUT, stdout=subprocess.PIPE)
+		output = process.communicate()[0]
 		version = re.search('version ([0123456789.]+)', output).group(1)
 		return (path, version)
 	else:
@@ -106,6 +108,7 @@ def download_yasra(install_path, file_name=None, interactive=True, recommended_v
 		file_name = version_to_download
 	version_to_download_url = url_path_join(site_url, version_to_download)
 	output_path = os.path.join(install_path, file_name)
+	print('Downloading "%s"...' % version_to_download_url)
 	download_handle = urllib2.urlopen(version_to_download_url)
 	with open(output_path, 'wb') as output_handle:
 		output_handle.write(download_handle.read())
@@ -163,6 +166,7 @@ def download_lastz(install_path, file_name=None, interactive=True, recommended_v
 	else:
 		version_to_download_url = url_path_join(dev_site_url, version_to_download)
 	output_path = os.path.join(install_path, file_name)
+	print('Downloading "%s"...' % version_to_download_url)
 	download_handle = urllib2.urlopen(version_to_download_url)
 	with open(output_path, 'wb') as output_handle:
 		output_handle.write(download_handle.read())
@@ -182,6 +186,7 @@ def install_lastz(install_path, executable_path=None, interactive=True,):
 	version = re.match(r"lastz-(\d+\.\d+\.\d+)\.tar\.gz", os.path.basename(lastz_archive_path)).group(1)
 	scr_path = os.path.join(install_path, "lastz-distrib-%s" % version, "src")
 	#install
+	print('Attempting to install lastz...')
 	runtime_output_path = os.path.join(install_path, "lastz_compilation_runtime_output.txt")
 	with open(runtime_output_path, 'w') as runtime_output_handle:
 		os.environ['LASTZ_INSTALL'] = executable_path
@@ -207,6 +212,7 @@ def install_yasra(install_path, executable_path=None, interactive=True):
 	version = re.match(r"YASRA-(\d+\.\d+)\.tar\.gz", os.path.basename(yasra_archive_path)).group(1)
 	scr_path = os.path.join(install_path, "YASRA-%s" % version)
 	#install
+	print('Attempting to install YASRA...')
 	runtime_output_path = os.path.join(install_path, "yasra_compilation_runtime_output.txt")
 	with open(runtime_output_path, 'w') as runtime_output_handle:
 		os.chdir(scr_path)
@@ -265,6 +271,7 @@ def download_mummer(install_path, file_name=None, interactive=True, recommended_
 	if file_name == None:
 		file_name = "MUMmer%s.tar.gz" % version_to_download
 	output_path = os.path.join(install_path, file_name)
+	print('Downloading "%s"...' % file_to_download)
 	download_handle = urllib2.urlopen(file_to_download)
 	with open(output_path, 'wb') as output_handle:
 		output_handle.write(download_handle.read())
@@ -284,6 +291,7 @@ def install_mummer(install_path, executable_path=None, interactive=True):
 	version = re.match(r"MUMmer(\d+\.\d+)\.tar\.gz", os.path.basename(archive_path)).group(1)
 	scr_path = os.path.join(install_path, "MUMmer%s" % version)
 	#install
+	print('Attempting to install MUMmer...')
 	runtime_output_path = os.path.join(install_path, "mummer_compilation_runtime_output.txt")
 	with open(runtime_output_path, 'w') as runtime_output_handle:
 		os.chdir(scr_path)
@@ -338,6 +346,9 @@ command_line_parser.add_argument('-e', '--executable_path',\
 								help='Path to store any automatically installed binaries.')
 command_line_parser.add_argument('-o', '--overwrite', default=False, action="store_true",\
 								help='Overwrite previous installation in same location.')
+if len(sys.argv) == 1:
+	command_line_parser.print_help()
+	sys.exit(0)
 arguments = command_line_parser.parse_args()
 arguments.install_path = os.path.join(arguments.install_path, "alignreads")
 if arguments.executable_path is None: 
@@ -377,7 +388,7 @@ if arguments.python is None:
 
 if arguments.lastz is False:
 	install_lastz(arguments.install_path, executable_path=arguments.executable_path, interactive=arguments.interactive)
-	arguments.lastz = arguments.install_path
+	arguments.lastz = os.path.join(arguments.executable_path, 'lastz')
 elif arguments.lastz is None:
 	arguments.lastz, lastz_version = find_active_version('lastz')
 	if arguments.lastz is None:
@@ -388,20 +399,21 @@ generic_program_validation(arguments.lastz, accepted_lastz_versions)
 
 if arguments.yasra is False:
 	install_yasra(arguments.install_path, executable_path=arguments.executable_path, interactive=arguments.interactive)
-	arguments.yasra = arguments.install_path
+	arguments.yasra = arguments.executable_path
 
 if arguments.nucmer is False:
 	install_mummer(arguments.install_path, executable_path=arguments.executable_path, interactive=arguments.interactive)
-	arguments.nucmer = arguments.install_path
-elif options.nucmer is None:
-	options.nucmer, nucmer_version = find_active_version('nucmer')
-	if options.nucmer is None:
+	arguments.nucmer = os.path.join(arguments.executable_path, 'nucmer')
+elif arguments.nucmer is None:
+	arguments.nucmer, nucmer_version = find_active_version('nucmer')
+	if arguments.nucmer is None:
 		raise TypeError('Cannot locate nucmer. Specifcy location using option --nucmer.')
 	else:
-		print "Found nucmer %s at %s" % (nucmer_version, options.nucmer)
-generic_program_validation(options.nucmer, accepted_nucmer_versions)
+		print "Found nucmer %s at %s" % (nucmer_version, arguments.nucmer)
+generic_program_validation(arguments.nucmer, accepted_nucmer_versions)
 
 #Modify Default Configuration File
+print(arguments)
 config_path = os.path.join(arguments.install_path, 'default_configuration.py')
 with open(config_path, 'r') as config_handle:
 	config = config_handle.read()
@@ -410,15 +422,15 @@ config = config.replace('nucmer_location = None', 'nucmer_location = "%s"' % arg
 config = config.replace('python_location = None', 'python_location = "%s"' % arguments.python)
 config = config.replace('lastz_location = None', 'lastz_location = "%s"' % arguments.lastz)
 with open(config_path, 'w') as config_handle:
-	config_handle.write(config)
+	config_handle.write(config) 
 
 #Create Shell Script to Run Alignreads
 alignreads_location = os.path.join(arguments.install_path, 'alignreads.py')
 shell_script_location = os.path.join(arguments.install_path, 'alignreads')
-shell_text = '#!/bin/csh\n%s %s $*\n' % (options.python, alignreads_location)
+shell_text = '#!/bin/csh\n%s %s $*\n' % (arguments.python, alignreads_location)
 with open(shell_script_location, 'w') as shell_handle:
 	shell_handle.write(shell_text)
-subprocess.call(['chmod', '+x', shell_script_location], stdout = runtime_output_handle, stderr = subprocess.STDOUT)
+subprocess.call(['chmod', '+x', shell_script_location], stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
 
 print 'The installation has completed successfully.'
 
