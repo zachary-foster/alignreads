@@ -8,8 +8,8 @@ read_type = "solexa"
 read_orientation = "circular"
 percent_identity = "same"
 single_step = False
-yasra_location = "/home/bpp/fosterz/bin" #'/home/bpp/fosterz/bin/YASRA'
-lastz_location = "/home/bpp/fosterz/bin/lastz"
+yasra_location = None
+lastz_location = None
 external_makefile = False
 ######
 
@@ -33,8 +33,8 @@ quality_read_filter = None
 depth_position_masking = None
 proportion_base_filter = None
 depth_position_filter = None 
-nucmer_location = "/local/cluster/MUMmer/nucmer"
-python_location = "/local/cluster/bin/python"
+nucmer_location = None
+python_location = None
 ######
 
 yasra_subfolder_name = 'YASRA_related_files'
