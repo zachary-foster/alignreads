@@ -340,8 +340,7 @@ command_line_parser.add_argument('-i', '--not-interactive', default=True, action
 command_line_parser.add_argument("-p", '--python', nargs='?', default=None,\
 								help="Specify the path to python. (Default: attempt to find path automatically). ")
 command_line_parser.add_argument("-n", '--nucmer', nargs='?', default=False,\
-								help="Specify the path to nucmer.
-								 If the option is used, but no path given, an attempt will be made to find the path automatically. (Default: download and install automatically).")
+								help="Specify the path to nucmer. If the option is used, but no path given, an attempt will be made to find the path automatically. (Default: download and install automatically).")
 command_line_parser.add_argument("-l", '--lastz', nargs='?', default=False,\
 								help="Specify the path to lastz. If the option is used, but no path given, an attempt will be made to find the path automatically. (Default: download and install automatically). ")
 command_line_parser.add_argument("-y", '--yasra', default=False,\
