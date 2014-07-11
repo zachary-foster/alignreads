@@ -263,14 +263,21 @@ def install_mummer(install_path, executable_path=None, interactive=True):
 		os.chdir(scr_path)
 		subprocess.call(["make", "check"], stdout = runtime_output_handle, stderr = subprocess.STDOUT)
 		subprocess.call(["make", "install"], stdout = runtime_output_handle, stderr = subprocess.STDOUT)
-		'''if "genomewalker" in os.listdir(executable_path):
-			print('Installation of yasra %s completed. Executables are in "%s".' % (version, executable_path))
+	#Check nucmer installation
+	nucmer_path = os.path.join(scr_path, "nucmer")
+	error_message = "Error in MUMmer installation. nucmer cannot be executed. Try manually installing MUMmer and supply to the path to the installation."
+	try:
+		nucmer_output = subprocess.check_output([nucmer_path, "-v"], stderr = subprocess.STDOUT)
+	except subprocess.CalledProcessError:
+		print(error_message)
+	else:
+		if nucmer_output.split('\n')[1] == '  USAGE: nucmer  [options]  <Reference>  <Query>':
+			print('Installation of MUMmer %s completed and verified. Executables are in "%s".' % (version, executable_path))
 		else:
-			print('Missing files detected. yasra might not have installed correctly')'''
-
+			print(error_message)
 
 def main(arguments):
-	print download_mummer("/home/local/USDA-ARS/fosterz/test", interactive=False, file_name="test.tar.gz")
+	print install_mummer("/nfs/Grunwald_Lab/Foster/test")
 	
 if __name__ == '__main__':
 	sys.exit(main(sys.argv[1:]))
