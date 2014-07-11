@@ -333,12 +333,15 @@ logging.basicConfig()
 command_line_parser = argparse.ArgumentParser(description=program_description)
 command_line_parser.add_argument("install_path",\
 								help="Location to install alignreads.")
+command_line_parser.add_argument('-d', '--directory-name',\
+								help='The name of the directory that will be created in "install_path" that will contain the installed files (Default: "alignreads").')
 command_line_parser.add_argument('-i', '--not-interactive', default=True, action="store_false", dest="interactive",\
 								help="Do not prompt user for input during installation. Recommended and default settings will be used unless otherwise specified by command line arguments.")
 command_line_parser.add_argument("-p", '--python', nargs='?', default=None,\
-								help="Specify the path to nucmer. (Default: attempt to find path automatically). ")
+								help="Specify the path to python. (Default: attempt to find path automatically). ")
 command_line_parser.add_argument("-n", '--nucmer', nargs='?', default=False,\
-								help="Specify the path to nucmer. (Default: attempt to find path automatically). ")
+								help="Specify the path to nucmer.
+								 If the option is used, but no path given, an attempt will be made to find the path automatically. (Default: download and install automatically).")
 command_line_parser.add_argument("-l", '--lastz', nargs='?', default=False,\
 								help="Specify the path to lastz. If the option is used, but no path given, an attempt will be made to find the path automatically. (Default: download and install automatically). ")
 command_line_parser.add_argument("-y", '--yasra', default=False,\
@@ -347,11 +350,12 @@ command_line_parser.add_argument('-e', '--executable_path',\
 								help='Path to store any automatically installed binaries.')
 command_line_parser.add_argument('-o', '--overwrite', default=False, action="store_true",\
 								help='Overwrite previous installation in same location.')
+								
 if len(sys.argv) == 1:
 	command_line_parser.print_help()
 	sys.exit(0)
 arguments = command_line_parser.parse_args()
-arguments.install_path = os.path.join(arguments.install_path, "alignreads")
+arguments.install_path = os.path.join(arguments.install_path, arguments.directory_name)
 if arguments.executable_path is None: 
 	arguments.executable_path = os.path.join(arguments.install_path, 'bin')
 
@@ -414,7 +418,6 @@ elif arguments.nucmer is None:
 generic_program_validation(arguments.nucmer, accepted_nucmer_versions)
 
 #Modify Default Configuration File
-print(arguments)
 config_path = os.path.join(arguments.install_path, 'default_configuration.py')
 with open(config_path, 'r') as config_handle:
 	config = config_handle.read()
