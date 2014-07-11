@@ -333,7 +333,7 @@ logging.basicConfig()
 command_line_parser = argparse.ArgumentParser(description=program_description)
 command_line_parser.add_argument("install_path",\
 								help="Location to install alignreads.")
-command_line_parser.add_argument('-d', '--directory-name',\
+command_line_parser.add_argument('-d', '--directory-name', default="alignreads",\
 								help='The name of the directory that will be created in "install_path" that will contain the installed files (Default: "alignreads").')
 command_line_parser.add_argument('-i', '--not-interactive', default=True, action="store_false", dest="interactive",\
 								help="Do not prompt user for input during installation. Recommended and default settings will be used unless otherwise specified by command line arguments.")
