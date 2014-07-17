@@ -1,18 +1,24 @@
-Installation Instructions:
+Alignreads is a wrapper for YASRA (http://www.bx.psu.edu/miller_lab/). 
+The principal function of alignreads is to facilitate easy execution of 
+YASRA and to parse its output. 
 
-1) Download the alignreads_#-#-#.tar.gz file and put on server.
-2) Uncompress the folder using:
-	"tar -xvzf alignreads_#-#-#.tar.gz"
-3) Change directories so that you are in the alignreads folder. 
-4) Run the installation script:
-	"python install.py /path/to/install/location"
-The install script has many options to adapt to different situations.
-It will attempt to download and install all prerequisites (except biopython). 
-Using command line options to install.py, you can tell it where an already 
-installed prerequisite exists or have it look for it in your $PATH.
-If the automated installation fails (typically due to non-standard system 
-configurations), you might have to install the prerequisite yourself. 
+YASRA is a reference guided assembler that has the ability to extend 
+the edges of alignments de novo iteratively. The minimum inputs are a 
+reference sequence and reads to be aligned, but there are many options. 
+Use `alignreads -h` after installation to see a full list of options. 
 
-NOTE: Alignreads requires Biopython for parsing of YASRA output. 
-If you do not already have Biopython installed, you should install it or 
-the Anaconda environment, which includes Biopython. 
+Alginreads has the following dependencies:
+	>YASRA
+	>lastz (used by YASRA)
+	>nucmer (from the MUMmer tool kit) 
+	>Biopython (used to parse YASRA's output)
+
+The installer of alignreads can typically download and install most of 
+these automatically. See INSTALL.txt for details.
+
+YASRA was created by Aakrosh Ratan at Pennsylvania State University in 
+the Miller lab. 
+
+Aligreads was created by Zachary Foster at Oregon State Univeristy in 
+the Liston lab. 
+
