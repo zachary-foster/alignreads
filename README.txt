@@ -1,14 +1,18 @@
 Installation Instructions:
 
-1) Put the alignreads folder (perhaps compressed) in desired installation
-location. Once installed, it should not be moved.
-2) Uncompress the folder if necessary using:
-	"tar -xvf alignreads_v#-#-#.tar"
+1) Download the alignreads_#-#-#.tar.gz file and put on server.
+2) Uncompress the folder using:
+	"tar -xvzf alignreads_#-#-#.tar.gz"
 3) Change directories so that you are in the alignreads folder. 
-4) Compile the install script, giving it the path to YASRA:
-	"python install.py /path/to/YASRA"
-If specific external dependencies are not found automatically, then
-they will need to be found/installed and specified through the options
-of install.py. In order to have alignreads be in the shell search path, you 
-should use the -i/--shell-init-file option of install.py to modify your 
-shell startup preferences.
+4) Run the installation script:
+	"python install.py /path/to/install/location"
+The install script has many options to adapt to different situations.
+It will attempt to download and install all prerequisites (except biopython). 
+Using command line options to install.py, you can tell it where an already 
+installed prerequisite exists or have it look for it in your $PATH.
+If the automated installation fails (typically due to non-standard system 
+configurations), you might have to install the prerequisite yourself. 
+
+NOTE: Alignreads requires Biopython for parsing of YASRA output. 
+If you do not already have Biopython installed, you should install it or 
+the Anaconda environment, which includes Biopython. 
