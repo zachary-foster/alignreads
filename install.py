@@ -126,7 +126,6 @@ def get_lastz_versions(site_url):
 	lastz_files = [f for f in files if re.match(r"lastz-(\d+\.\d+\.\d+)\.tar\.gz", f)]
 	return lastz_files
 
-
 def download_lastz(install_path, file_name=None, interactive=True, recommended_version="lastz-1.03.02.tar.gz"):
 	old_site_url = "http://www.bx.psu.edu/miller_lab/dist"
 	dev_site_url = "http://www.bx.psu.edu/~rsharris/lastz/newer"
@@ -223,7 +222,6 @@ def install_yasra(install_path, executable_path=None, interactive=True):
 			print('Installation of yasra %s completed. Executables are in "%s".' % (version, executable_path))
 		else:
 			print('Missing files detected. yasra might not have installed correctly')
-
 
 def get_mummer_versions(site_url):
 	url_pattern = "http://sourceforge.net/projects/mummer/files/mummer/%s/MUMmer%s.tar.gz/download"
@@ -328,7 +326,6 @@ installer_folder = os.path.abspath(os.getcwd())
 #Initialization
 logging.basicConfig()
 
-
 #Command line parsing
 command_line_parser = argparse.ArgumentParser(description=program_description)
 command_line_parser.add_argument("install_path",\
@@ -358,28 +355,17 @@ arguments.install_path = os.path.join(arguments.install_path, arguments.director
 if arguments.executable_path is None: 
 	arguments.executable_path = os.path.join(arguments.install_path, 'bin')
 
-
 #Make installation directory
 if os.path.exists(arguments.install_path):
 	if arguments.overwrite:
 		shutil.rmtree(arguments.install_path)
 	else:
 		logging.fatal("Installation directory exists. Use the --overwrite option to remove previous installation.")
-os.mkdir(arguments.install_path)
-if arguments.install_path != arguments.executable_path:
+shutil.copytree(installer_folder, arguments.install_path)
+
+#Make executable directory
+if !os.path.exists(arguments.executable_path):
 	os.mkdir(arguments.executable_path)
-
-
-#Unpack Installation
-tar_handle = tarfile.open(os.path.join(installer_folder, 'uninstalled_content.tar'), 'r')
-tar_handle.extractall(installer_folder)
-tar_handle.close()
-
-#Move files to installation directory
-unpacked_uninstalled_content = os.path.join(installer_folder, 'uninstalled_content')
-for name in os.listdir(unpacked_uninstalled_content):
-	os.rename(os.path.join(unpacked_uninstalled_content, name), os.path.join(arguments.install_path, name))
-os.rmdir(unpacked_uninstalled_content)
 
 #Validation and installation of requirements
 if arguments.python is None:
