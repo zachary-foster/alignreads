@@ -364,7 +364,7 @@ if os.path.exists(arguments.install_path):
 shutil.copytree(installer_folder, arguments.install_path)
 
 #Make executable directory
-if !os.path.exists(arguments.executable_path):
+if os.path.exists(arguments.executable_path) is False:
 	os.mkdir(arguments.executable_path)
 
 #Validation and installation of requirements
