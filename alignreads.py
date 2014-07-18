@@ -182,7 +182,7 @@ program_arguments = sys.argv #argument list supplied by user in its raw form
 minimum_argument_number = 1 #the smallest amount of arguments with which it is possible to run the script
 original_cwd = os.getcwd()
 program_name = 'alignreads'
-program_version = '2.5.0'
+program_version = '2.5.2'
 program_usage = 'python %s <Read FASTA File> <Reference FASTA File>  [options] OR...\n       python %s <Alignreads Output Folder> [options]' % (program_name, program_name)
 accepted_lastz_versions = ['1.3.2', '1.03.02', '1.03.03', '1.3.3']
 accepted_readtools_versions = ['1.0.0']
@@ -259,6 +259,9 @@ makeconsensus_group.add_option("-b", "--proportion-base-filter", action="callbac
                                help="Set the acceptable range(s) for the proportion of bases at a given position that support a given call. Nucleotides with outside of this range will be ignored when condensing the position to an IUPAC character. (Default: %s)" % configuration.proportion_base_filter)
 makeconsensus_group.add_option("-d", "--depth-position-filter", action="callback", default=configuration.depth_position_filter, callback=multRangeCallback, dest='depth_position_filter',\
                                help="Set the depth range(s) for position filtering. Positions outside this range will not be included in the consensus sequences. (Default: %s)" % configuration.depth_position_filter)
+command_line_parser.add_option_group(yasra_group)
+command_line_parser.add_option_group(nucmer_group)
+command_line_parser.add_option_group(makeconsensus_group)
 (options, arguments) = command_line_parser.parse_args(sys.argv[1:])
 if options.output_directory is None:
     options.output_directory = os.getcwd()
@@ -272,9 +275,6 @@ if options.config_file is None:
 
 ### Help Menu ###
 if len(arguments) == 0: #if no arguments are supplied
-    command_line_parser.add_option_group(yasra_group)
-    command_line_parser.add_option_group(nucmer_group)
-    command_line_parser.add_option_group(makeconsensus_group)
     command_line_parser.print_help()
     sys.exit(0)
 ######
