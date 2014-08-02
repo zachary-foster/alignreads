@@ -5,6 +5,12 @@ import readtools
 import os, sys, copy
 from optparse import *
 from datetime import *
+import logging
+
+### Logging
+# create logger
+logger = logging.getLogger('')
+####
 
 accepted_readtools_versions = ['1.0.0']
 try:
@@ -126,6 +132,8 @@ cmndLineParser.add_option("-d",   "--depth-position-masking",       action="call
 #General options
 cmndLineParser.add_option("-u",   "--include-unaligned",       action="store_true",      default=False,     dest='include_unaligned',\
                           help="Include the unaligned portions of the sequence in the output (Default: only output aligned regions.")
+cmndLineParser.add_option("-N",   "--nucmer-location",       action="store",      default='nucmer',\
+                          help="Specify the location of the nucmer executable.")
 cmndLineParser.add_option(      '--touch',       action='store_true',    default=False,\
                           help='Load silently and do nothing.')
 nucmerGroup.add_option(     "-n",   "--prefix",             action="store",         default="out",      type="string",  dest="prefix",          metavar="STRING",   help="Set the output file prefix (Default: out)")
@@ -209,7 +217,7 @@ if options.touch is False:
     readtools.PileupAlignmentIO.write(contigs, contigPath, 'fasta')
     ##Align contigs with nucmer
     options.prefix = os.path.basename(contigPath)
-    readtools.runNucmer(contigPath, referencePath, breaklen=options.breaklen, mincluster=options.mincluster, diagfactor=options.diagfactor, noextend=options.noextend,\
+    readtools.runNucmer(contigPath, referencePath, nucmer_path=options.nucmer_location, breaklen=options.breaklen, mincluster=options.mincluster, diagfactor=options.diagfactor, noextend=options.noextend,\
                         maxgap=options.maxgap, minmatch=options.minmatch, coords=options.coords, nooptimize=options.nooptimize, prefix=options.prefix,\
                         nosimplify=options.nosimplify, forward=options.forward)
     ##Apply nucmer alignments to contigs

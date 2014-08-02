@@ -1,7 +1,7 @@
 #!/usr/bin/env python
     
 ###Imports and Variable Initalizations###
-import re, copy, os, sys, subprocess
+import re, copy, os, sys, subprocess, logging
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import IUPAC
@@ -27,6 +27,11 @@ cigarTypes = tuple(cigarInsertTypes.keys()) + cigarAlignedTypes + cigarIgnoredTy
 cigarPresentTypes = tuple(cigarInsertTypes.keys()) + cigarAlignedTypes
 gapPlaceholder = cigarInsertTypes['N']
 
+
+### Logging
+# create logger
+logger = logging.getLogger('')
+####
 
 ###Global Functions###
 def iterateGenerators(generators):
@@ -1020,15 +1025,16 @@ def dictToCommandLine(dictonary):
                 commandLine.append(value)
     return commandLine
 
-def runNucmer(queryPath, referencePath, mum=False, mumreference=False, maxmatch=False, breaklen=200, mincluster=65, nodelta=False, depend=False,\
+def runNucmer(queryPath, referencePath, nucmer_path='nucmer', mum=False, mumreference=False, maxmatch=False, breaklen=200, mincluster=65, nodelta=False, depend=False,\
               diagfactor=0.12, noextend=False, forward=False, maxgap=90, help=False, minmatch=20, coords=False, nooptimize=False, prefix='out',\
               reverse=False, nosimplify=False, version=False):
     '''Version 1.0'''
     if mum == False and mumreference == False and maxmatch == False: mumreference = True #only one of the three options should be true
     options = locals()
-    del options['queryPath'], options['referencePath']
+    del options['queryPath'], options['referencePath'], options['nucmer_path']
     options = dictToCommandLine(options)
-    nucmerCmndLine = ['nucmer'] + options + [referencePath,queryPath] #USAGE: nucmer  [options]  <Reference>  <Query>
+    nucmerCmndLine = [nucmer_path] + options + [referencePath,queryPath] #USAGE: nucmer  [options]  <Reference>  <Query>
+    logger.info("Running nucmer with the following command line:\n%s" % ' '.join(nucmerCmndLine))
     nucmerStdOut = open(os.path.join(os.getcwd(),'nucmer_standard_output.txt'), 'w')
     nucmerStdErr = open(os.path.join(os.getcwd(),'nucmer_standard_error.txt'), 'w')
     nucmerProcess = Popen(nucmerCmndLine, stdout=PIPE, stderr=PIPE)

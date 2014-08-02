@@ -17,6 +17,11 @@ else:
         raise ImportError("Wrong version of readtools.py detected. Version found: '%s\nCompatible Versions: %s" % (readtools.program_version, ", ".join(accepted_readtools_version)))
 ######################################################################################################################################################
 
+### Logging
+# create logger
+logger = logging.getLogger('')
+####
+
 ###Variable Initialization############################################################################################################################
 timeStamp = datetime.now().ctime().replace(' ','-')  #Ex: 'Mon-Jun-14-11:08:55-2010'
 commandLine = copy.deepcopy(sys.argv)
@@ -130,7 +135,7 @@ if '--touch' not in commandLine:
     ###Makefile Creation##################################################################################################################################
     try:
         if options.makefile_path is None:
-            logging.debug('Creating the YASRA makefile...')
+            logger.debug('Creating the YASRA makefile...')
             makefileData = '''\
 #for a full scale assisted assembly:
 #  keep a FASTA/FASTQ file with the reads from the target genome,
@@ -316,7 +321,7 @@ final_assembly:
 
 clean:
 ''' +'\t'+ '''rm Final_Assembly alignments.sam contigs.ace'''
-            logging.debug('YASRA makefile created.')
+            logger.debug('YASRA makefile created.')
         else:
             makefileHandle = open(options.makefile_path, 'w')
             makefileData = makefileHandle.read()

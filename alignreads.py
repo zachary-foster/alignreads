@@ -174,9 +174,27 @@ else:
 import_file(configuration_path, name="configuration")
 ######
 
-### Variable Initialization ###
+### Logging Initialization# create logger with 'spam_application'
 temporary_file_id, temporary_log_file = tempfile.mkstemp(prefix=configuration.temporary_file_prefix, suffix=configuration.temporary_log_file_suffix, dir=configuration.temporary_file_location)
-logging.basicConfig(filename = temporary_log_file, level = 'DEBUG', format = '[%(asctime)s]\t%(levelname)s\t%(module)s\t%(lineno)d\t%(message)s')
+logger = logging.getLogger('')
+logger.setLevel(logging.DEBUG)
+# create file handler which logs even debug messages
+fh = logging.FileHandler(temporary_log_file)
+fh.setLevel(logging.DEBUG)
+# create console handler with a higher log level
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+# create formatter and add it to the handlers
+formatter = logging.Formatter('[%(asctime)s]\t%(levelname)s\t%(module)s\t%(lineno)d\t%(message)s')
+fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+# add the handlers to the logger
+logger.addHandler(fh)
+logger.addHandler(ch)
+######
+
+### Variable Initialization ###
+#logging.basicConfig(filename = temporary_log_file, level = 'DEBUG', format = '[%(asctime)s]\t%(levelname)s\t%(module)s\t%(lineno)d\t%(message)s')
 start_time = time.clock()
 program_arguments = sys.argv #argument list supplied by user in its raw form
 minimum_argument_number = 1 #the smallest amount of arguments with which it is possible to run the script
@@ -197,7 +215,8 @@ nucmer_arguments = {'break_length' : '--break-len', 'min_cluster' : '--min-clust
                     'forward_only' : '--forward-only','max_gap' : '--max-gap', 'coords' : '--coords', 'no_optimize' : '--no-optimize', \
                     'no_simplify' : '--no-simplify', 'min_match' : '--min-match'}
 makeconsensus_arguments = {'depth_position_filter' : '--depth-position-filter', 'quality_read_filter' : '--quality-read-filter',\
-                           'depth_position_masking' : '--depth-position-masking', 'proportion_base_filter' : '--proportion-base-filter'}
+                           'depth_position_masking' : '--depth-position-masking', 'proportion_base_filter' : '--proportion-base-filter',\
+                           'nucmer_location' : '--nucmer-location'}
 run_id_default = None
 print_log = []
 ######
@@ -259,6 +278,8 @@ makeconsensus_group.add_option("-b", "--proportion-base-filter", action="callbac
                                help="Set the acceptable range(s) for the proportion of bases at a given position that support a given call. Nucleotides with outside of this range will be ignored when condensing the position to an IUPAC character. (Default: %s)" % configuration.proportion_base_filter)
 makeconsensus_group.add_option("-d", "--depth-position-filter", action="callback", default=configuration.depth_position_filter, callback=multRangeCallback, dest='depth_position_filter',\
                                help="Set the depth range(s) for position filtering. Positions outside this range will not be included in the consensus sequences. (Default: %s)" % configuration.depth_position_filter)
+makeconsensus_group.add_option("-n",   "--nucmer-location",       action="store",      default=configuration.nucmer_location,\
+                          help="Specify the location of the nucmer executable.")
 command_line_parser.add_option_group(yasra_group)
 command_line_parser.add_option_group(nucmer_group)
 command_line_parser.add_option_group(makeconsensus_group)
@@ -269,7 +290,7 @@ if options.config_file is None:
     options.config_file = os.path.join(installation_location, "default_configuration.py")
     if os.path.exists(options.config_file) is False:
         error_text = 'Could not find default configuration file "%s" and a alternative was not specified.' % options.config_file
-        logging.fatal(error_text)
+        logger.fatal(error_text)
         raise Exception(error_text)
 ######
 
@@ -280,38 +301,38 @@ if len(arguments) == 0: #if no arguments are supplied
 ######
 
 ### Argument Validation ###
-logging.debug('Validating input arguments...')
+logger.debug('Validating input arguments...')
 if len(arguments) == 1:
     if os.path.isdir(arguments[0]) is False:
         error = '[alignreads] Path supplied is not a directory. Alignreads takes either 1 directory or 2 files as arguments.' % str(len(arguments))
-        logging.fatal(error)
+        logger.fatal(error)
         raise ValueError(error)
 elif len(arguments) == 2:
     if os.path.isfile(arguments[0]) is False:
         error = '[alignreads] First path supplied is not a file. Alignreads takes either 1 directory or 2 files as arguments.' % str(len(arguments))
-        logging.fatal(error)
+        logger.fatal(error)
         raise ValueError(error)
     if os.path.isfile(arguments[1]) is False:
         error = '[alignreads] Second path supplied is not a file. Alignreads takes either 1 directory or 2 files as arguments.' % str(len(arguments))
-        logging.fatal(error)
+        logger.fatal(error)
         raise ValueError(error)
 elif len(arguments) > 2:
     error = '[alignreads] Too many argments supplied. Alignreads takes either 1 directory or 2 files as arguments. %s arguments supplied...' % str(len(arguments))
-    logging.fatal(error)
+    logger.fatal(error)
     raise ValueError(error)
-logging.debug('Validating input arguments complete.')
+logger.debug('Validating input arguments complete.')
 ######
 
 ### Alignreads Component Version Verification ###
-logging.debug('Checking versions of alignreads components...')
+logger.debug('Checking versions of alignreads components...')
 import_and_validate("readtools", accepted_readtools_versions)
 import_and_validate("runyasra", accepted_runyasra_versions)
 import_and_validate("makeconsensus", accepted_makeconesnsus_versions)
-logging.debug('Checking versions of alignreads components complete.')
+logger.debug('Checking versions of alignreads components complete.')
 ######
 
 ### Lastz Version Verification ###
-logging.debug('Checking version of lastz...')
+logger.debug('Checking version of lastz...')
 try:
     process = Popen([configuration.lastz_location, "-v"], stdout=PIPE)
     process.wait()
@@ -321,13 +342,13 @@ try:
         raise readtools.InputValidationError("[alignreads] Wrong version of LASTZ detected. Version found: '%s'.  Compatible Versions: '%s'" %\
                                              (lastz_version, ", ".join(accepted_lastz_versions)))
 except:
-    logging.fatal('An unknown error occured during validation of LASTZ:')
+    logger.fatal('An unknown error occured during validation of LASTZ:')
     raise
-logging.debug('Checking version of lastz complete.')
+logger.debug('Checking version of lastz complete.')
 ######
 
 ### Nucmer Version Verification ###
-logging.debug('Checking version of nucmer...')
+logger.debug('Checking version of nucmer...')
 try:
     process = Popen([configuration.nucmer_location, "-v"], stdout=PIPE, stderr=STDOUT)
     process.wait()
@@ -337,20 +358,20 @@ try:
         raise readtools.InputValidationError("Wrong version of LASTZ detected. Version found: '%s'.  Compatible Versions: '%s'" %\
                                              (nucmer_version, ", ".join(accepted_nucmer_versions)))
 except:
-    logging.fatal("An unknown error occured during validation of nucmer:")
+    logger.fatal("An unknown error occured during validation of nucmer:")
     raise
-logging.debug('Checking version of nucmer complete.')
+logger.debug('Checking version of nucmer complete.')
 ######
 
 ### Execution of Runyasra ###
 try:
     if len(arguments) == 2: #if runyasra is to be used...
-        logging.debug('Executing runyasra...')
+        logger.debug('Executing runyasra...')
         yasra_query_path = os.path.abspath(arguments[0])
         yasra_reference_path = os.path.abspath(arguments[1])
         runyasra_command_line = ['runyasra.py'] + getOptCmndLine(options,runyasra_arguments) + [yasra_query_path, yasra_reference_path]
         sys.argv = runyasra_command_line
-        logging.info('Implimenting YASRA with runyasra.py using the following command line:\n %s' % ' '.join(runyasra_command_line))
+        logger.info('Implimenting YASRA with runyasra.py using the following command line:\n %s' % ' '.join(runyasra_command_line))
         try:
             reload(runyasra)
         except readtools.InputValidationError as error:
@@ -358,7 +379,7 @@ try:
         except readtools.YasraFailure as error:
             raise
         except:
-            logging.exception("An unknown error occured during runyasra.")
+            logger.exception("An unknown error occured during runyasra.")
             raise
         else: #if runyasra completed
             alignreads_folder = runyasra.outDirPath
@@ -366,12 +387,12 @@ try:
             command_line_record_file_path = os.path.join(runyasra_folder, configuration.command_line_record_file_name)
             saveCommandLine(configuration.command_line_record_file_name, runyasra_command_line)    
             mvFiles(alignreads_folder, runyasra_folder)
-        logging.debug('Execution of runyasra complete...')
+        logger.debug('Execution of runyasra complete...')
 ######
 
 ### Determination of read and reference files from previous runyasra output ###
     elif len(arguments) == 1: #if the user supplied the folder of a previous yasra run, insead of running it again
-        logging.debug('Extracting information from previous alignreads run...')
+        logger.debug('Extracting information from previous alignreads run...')
         alignreads_folder = os.path.abspath(arguments[0])
         runyasra_folder = os.path.join(alignreads_folder, configuration.yasra_subfolder_name)
         makefile_path = os.path.join(runyasra_folder, 'Makefile') #reads makefile
@@ -383,12 +404,12 @@ try:
             elif line.find('TEMPLATE=') == 0:
                 yasra_reference_path = line.strip().replace('TEMPLATE=','')
                 break
-        logging.debug('Extraction of information from previous alignreads run complete.')
+        logger.debug('Extraction of information from previous alignreads run complete.')
 ######
 
 ### Generation of New Alignment Folder ###
     try:
-        logging.debug('Preparing output folder for post-yasra anaylsis....')
+        logger.debug('Preparing output folder for post-yasra anaylsis....')
         alignment_folders = [name for name in os.listdir(alignreads_folder) if os.path.isdir(os.path.join(alignreads_folder, name)) and\
                              re.match("%s_(\S+_)?\d+" % configuration.make_consensus_sub_folder_name, name) is not None]
         if len(alignment_folders) > 0:
@@ -407,14 +428,14 @@ try:
         new_folder_path = os.path.join(alignreads_folder, new_folder_name)
         os.mkdir(new_folder_path)
     except:
-        logging.exception('An unknown error occured during creation of new alignment folder')
+        logger.exception('An unknown error occured during creation of new alignment folder')
         raise
     else:
-        logging.debug('Prepartion of output folder for post-yasra anaylsis complete.')
+        logger.debug('Prepartion of output folder for post-yasra anaylsis complete.')
 ######
 
 ### Execution of makeconsensus.py ###
-    logging.debug('Executing makeconsensus...')
+    logger.debug('Executing makeconsensus...')
     yasra_query_link_path = os.path.join(runyasra_folder, os.path.basename(yasra_query_path))
     yasra_reference_link_path = os.path.join(runyasra_folder, os.path.basename(yasra_reference_path))
     sam_path = os.path.join(runyasra_folder, 'alignments_%s_%s.sam' % (os.path.basename(yasra_query_link_path), os.path.basename(yasra_reference_link_path)))
@@ -426,7 +447,7 @@ try:
         sys.argv = makeconsensus_command_line
         reload(makeconsensus)
     except:
-        logging.fatal('An error occured during execution of makeconsensus.py:')
+        logger.fatal('An error occured during execution of makeconsensus.py:')
         raise
     else:
         sys.argv = program_arguments
@@ -434,7 +455,7 @@ try:
     finally:
         os.chdir(original_cwd)
         sys.argv = program_arguments
-        logging.debug('Execution of makeconsensus complete.')
+        logger.debug('Execution of makeconsensus complete.')
 ######
 
 ### Log File and Clean Up ###
