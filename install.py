@@ -175,16 +175,21 @@ def download_lastz(install_path, file_name=None, interactive=True, recommended_v
 def install_lastz(install_path, executable_path=None, interactive=True,):
 	if executable_path == None:
 		executable_path = install_path
-	#Download 
+	# Download --------------------------------------------------------------------------------------
 	lastz_archive_path = download_lastz(install_path, interactive=interactive)
-	#Untar 
+	# Untar -----------------------------------------------------------------------------------------
 	tar_handle = tarfile.open(lastz_archive_path, 'r')
 	tar_handle.extractall(install_path)
 	tar_handle.close()
-	#Get path to scr directory in archive
+	# Get path to scr directory in archive ----------------------------------------------------------
 	version = re.match(r"lastz-(\d+\.\d+\.\d+)\.tar\.gz", os.path.basename(lastz_archive_path)).group(1)
 	scr_path = os.path.join(install_path, "lastz-distrib-%s" % version, "src")
-	#install
+	# Remove -Werror flag from src/makefile ---------------------------------------------------------
+	with open(os.path.join(scr_path, "Makefile")) as makefile_handle:
+		content = makefile_handle.read()
+		content = content.replace('-Werror ', '')
+		makefile_handle.write(content)
+	# install ---------------------------------------------------------------------------------------
 	print('Attempting to install lastz...')
 	runtime_output_path = os.path.join(install_path, "lastz_compilation_runtime_output.txt")
 	with open(runtime_output_path, 'w') as runtime_output_handle:
