@@ -185,9 +185,11 @@ def install_lastz(install_path, executable_path=None, interactive=True,):
 	version = re.match(r"lastz-(\d+\.\d+\.\d+)\.tar\.gz", os.path.basename(lastz_archive_path)).group(1)
 	scr_path = os.path.join(install_path, "lastz-distrib-%s" % version, "src")
 	# Remove -Werror flag from src/makefile ---------------------------------------------------------
-	with open(os.path.join(scr_path, "Makefile")) as makefile_handle:
+	makefile_path = os.path.join(scr_path, "Makefile")
+	with open(makefile_path, 'r') as makefile_handle:
 		content = makefile_handle.read()
-		content = content.replace('-Werror ', '')
+	content = content.replace('-Werror ', '')
+	with open(makefile_path, 'w') as makefile_handle:
 		makefile_handle.write(content)
 	# install ---------------------------------------------------------------------------------------
 	print('Attempting to install lastz...')
@@ -206,21 +208,30 @@ def install_lastz(install_path, executable_path=None, interactive=True,):
 def install_yasra(install_path, executable_path=None, interactive=True):
 	if executable_path == None:
 		executable_path = install_path
-	#Download 
+	# Download --------------------------------------------------------------------------------------
 	yasra_archive_path = download_yasra(install_path, interactive=interactive)
-	#Untar 
+	# Untar -----------------------------------------------------------------------------------------
 	tar_handle = tarfile.open(yasra_archive_path, 'r')
 	tar_handle.extractall(install_path)
 	tar_handle.close()
-	#Get path to scr directory in archive
+	# Get path to scr directory in archive ----------------------------------------------------------
 	version = re.match(r"YASRA-(\d+\.\d+)\.tar\.gz", os.path.basename(yasra_archive_path)).group(1)
 	scr_path = os.path.join(install_path, "YASRA-%s" % version)
-	#install
+	# Make `configure` ignore LASTZ check -----------------------------------------------------------
+	conifgure_path = os.path.join(scr_path, "configure")
+	with open(conifgure_path, 'r') as configure_handle:
+		content = configure_handle.read()
+	content = content.replace("# Be Bourne compatible", "# ALIGNREADS MODIFICATIONS:\nLASTZ='yes'\n\n# Be Bourne compatible")
+	with open(conifgure_path, 'w') as configure_handle:
+		configure_handle.write(content)
+	# Install ---------------------------------------------------------------------------------------
 	print('Attempting to install YASRA...')
 	runtime_output_path = os.path.join(install_path, "yasra_compilation_runtime_output.txt")
 	with open(runtime_output_path, 'w') as runtime_output_handle:
 		os.chdir(scr_path)
-		subprocess.call(["./configure", "--prefix=%s" %	 install_path, "--bindir=%s" % executable_path], stdout = runtime_output_handle, stderr = subprocess.STDOUT)
+		config_command = ["./configure", "--prefix=%s" % install_path, "--bindir=%s" % executable_path]
+		runtime_output_handle.write('>>> ' + ' '.join(config_command) + '\n')
+		subprocess.call(config_command, stdout = runtime_output_handle, stderr = subprocess.STDOUT)
 		subprocess.call(["make"], stdout = runtime_output_handle, stderr = subprocess.STDOUT)
 		subprocess.call(["make", "install"], stdout = runtime_output_handle, stderr = subprocess.STDOUT)
 		if "genomewalker" in os.listdir(executable_path):
@@ -284,23 +295,23 @@ def download_mummer(install_path, file_name=None, interactive=True, recommended_
 def install_mummer(install_path, executable_path=None, interactive=True):
 	if executable_path == None:
 		executable_path = install_path
-	#Download 
+	# Download --------------------------------------------------------------------------------------
 	archive_path = download_mummer(install_path, interactive=interactive)
-	#Untar 
+	# Untar -----------------------------------------------------------------------------------------
 	tar_handle = tarfile.open(archive_path, 'r')
 	tar_handle.extractall(install_path)
 	tar_handle.close()
-	#Get path to scr directory in archive
+	# Get path to scr directory in archive ----------------------------------------------------------
 	version = re.match(r"MUMmer(\d+\.\d+)\.tar\.gz", os.path.basename(archive_path)).group(1)
 	scr_path = os.path.join(install_path, "MUMmer%s" % version)
-	#install
+	# Install ---------------------------------------------------------------------------------------
 	print('Attempting to install MUMmer...')
 	runtime_output_path = os.path.join(install_path, "mummer_compilation_runtime_output.txt")
 	with open(runtime_output_path, 'w') as runtime_output_handle:
 		os.chdir(scr_path)
 		subprocess.call(["make", "check"], stdout = runtime_output_handle, stderr = subprocess.STDOUT)
 		subprocess.call(["make", "install"], stdout = runtime_output_handle, stderr = subprocess.STDOUT)
-	#Check nucmer installation
+	# Check nucmer installation ---------------------------------------------------------------------
 	nucmer_path = os.path.join(scr_path, "nucmer")
 	error_message = "Error in MUMmer installation. nucmer cannot be executed. Try manually installing MUMmer and supply to the path to the installation."
 	try:
@@ -387,7 +398,7 @@ if arguments.lastz is False:
 elif arguments.lastz is None:
 	arguments.lastz, lastz_version = find_active_version('lastz')
 	if arguments.lastz is None:
-		raise TypeError('Cannot locate lastz. Specifcy location using option --lastz or omit option to download and install automatically.')
+		raise TypeError('Cannot locate lastz. Specify location using option --lastz or omit option to download and install automatically.')
 	else:
 		print "Found lastz %s at %s" % (lastz_version, arguments.lastz)
 generic_program_validation(arguments.lastz, accepted_lastz_versions)
@@ -402,7 +413,7 @@ if arguments.nucmer is False:
 elif arguments.nucmer is None:
 	arguments.nucmer, nucmer_version = find_active_version('nucmer')
 	if arguments.nucmer is None:
-		raise TypeError('Cannot locate nucmer. Specifcy location using option --nucmer.')
+		raise TypeError('Cannot locate nucmer. Specify location using option --nucmer.')
 	else:
 		print "Found nucmer %s at %s" % (nucmer_version, arguments.nucmer)
 generic_program_validation(arguments.nucmer, accepted_nucmer_versions)
