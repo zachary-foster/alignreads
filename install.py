@@ -19,14 +19,17 @@ from urlparse import urlsplit, urlunsplit
 def generic_program_validation(path, accepted_versions):
 	try:
 		name = os.path.split(path)[1]
-		process =  subprocess.Popen([path, "-v"], stderr = subprocess.STDOUT, stdout=subprocess.PIPE)
+		command = [path, "-v"]
+		logging.info("Attempting the following command:\n%s" % ' '.join(command))
+		process =  subprocess.Popen(command, stderr = subprocess.STDOUT, stdout=subprocess.PIPE)
 		output = process.communicate()[0]
 		version = re.search('version ([0123456789.]+)', output).group(1)
 		if version not in accepted_versions:
 			raise TypeError("Wrong version of %s detected. Version found: '%s'.  Compatible Versions: '%s'" %\
 												 (name, version, ", ".join(accepted_versions)))
-	except:
+	except Exception as error:
 		logging.fatal('An unknown error occurred during validation of %s:' % name)
+		print(error)
 		raise
 
 def find_active_version(name):
@@ -311,15 +314,19 @@ def install_mummer(install_path, executable_path=None, interactive=True):
 		os.chdir(scr_path)
 		subprocess.call(["make", "check"], stdout = runtime_output_handle, stderr = subprocess.STDOUT)
 		subprocess.call(["make", "install"], stdout = runtime_output_handle, stderr = subprocess.STDOUT)
-	# Check nucmer installation ---------------------------------------------------------------------
+	# Make link to nucmer executable ----------------------------------------------------------------
 	nucmer_path = os.path.join(scr_path, "nucmer")
-	error_message = "Error in MUMmer installation. nucmer cannot be executed. Try manually installing MUMmer and supply to the path to the installation."
+	os.symlink(nucmer_path, os.path.join(executable_path, "nucmer"))
+	# Check nucmer installation ---------------------------------------------------------------------
+	error_message = "Error in MUMmer installation. nucmer at '%s' cannot be executed. Try manually installing MUMmer and supply to the path to the installation." % nucmer_path
 	try:
 		nucmer_output = subprocess.check_output([nucmer_path, "-v"], stderr = subprocess.STDOUT)
-	except subprocess.CalledProcessError:
+	except subprocess.CalledProcessError as error:
 		print(error_message)
+		print(error)
+		raise error
 	else:
-		if nucmer_output.split('\n')[1] == '  USAGE: nucmer  [options]  <Reference>  <Query>':
+		if nucmer_output.split('\n')[0].startswith("nucmer"):
 			print('Installation of MUMmer %s completed and verified. Executables are in "%s".' % (version, executable_path))
 		else:
 			print(error_message)
@@ -327,7 +334,7 @@ def install_mummer(install_path, executable_path=None, interactive=True):
 
 #Change log
 change_log = [('1.0.0',		'First version of the script'),\
-				('1.1.0'	'Rewrote. Downloads and installes prerequisites')]
+				('1.1.0'	'Rewrote. Downloads and installs prerequisites')]
 version = change_log[-1][0]
 
 #Constants
@@ -340,7 +347,7 @@ accepted_nucmer_versions = ['3.1']
 installer_folder = os.path.abspath(os.getcwd())
 
 #Initialization
-logging.basicConfig()
+logging.basicConfig(level = "INFO")
 
 #Command line parsing
 command_line_parser = argparse.ArgumentParser(description=program_description)
