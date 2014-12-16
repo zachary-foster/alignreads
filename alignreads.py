@@ -172,8 +172,6 @@ if "--config-file" in sys.argv:
         raise TypeError('No config-file argument found')
 else:
     configuration_path = os.path.join(os.path.split(sys.argv[0])[0], "default_configuration.py")
-    print sys.argv
-    print configuration_path
 import_file(configuration_path, name="configuration")
 ######
 
@@ -186,7 +184,7 @@ fh = logging.FileHandler(temporary_log_file)
 fh.setLevel(logging.DEBUG)
 # create console handler with a higher log level
 ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
+ch.setLevel(logging.DEBUG)
 # create formatter and add it to the handlers
 formatter = logging.Formatter('[%(asctime)s]\t%(levelname)s\t%(module)s\t%(lineno)d\t%(message)s')
 fh.setFormatter(formatter)
@@ -311,12 +309,8 @@ if len(arguments) == 1:
         logger.fatal(error)
         raise ValueError(error)
 elif len(arguments) == 2:
-    if os.path.isfile(arguments[0]) is False:
+    if os.path.isfile(arguments[0]) is False or os.path.isfile(arguments[1]) is False:
         error = '[alignreads] First path supplied is not a file. Alignreads takes either 1 directory or 2 files as arguments.' % str(len(arguments))
-        logger.fatal(error)
-        raise ValueError(error)
-    if os.path.isfile(arguments[1]) is False:
-        error = '[alignreads] Second path supplied is not a file. Alignreads takes either 1 directory or 2 files as arguments.' % str(len(arguments))
         logger.fatal(error)
         raise ValueError(error)
 elif len(arguments) > 2:
@@ -327,44 +321,66 @@ logger.debug('Validating input arguments complete.')
 ######
 
 ### Alignreads Component Version Verification ###
-logger.debug('Checking versions of alignreads components...')
 import_and_validate("readtools", accepted_readtools_versions)
 import_and_validate("runyasra", accepted_runyasra_versions)
 import_and_validate("makeconsensus", accepted_makeconesnsus_versions)
-logger.debug('Checking versions of alignreads components complete.')
 ######
 
-### Lastz Version Verification ###
-logger.debug('Checking version of lastz...')
-try:
-    process = Popen([configuration.lastz_location, "-v"], stdout=PIPE)
-    process.wait()
-    lastz_output = process.stdout.read()
-    lastz_version = re.search('version ([0123456789.]*) ', lastz_output).group(1)
-    if lastz_version not in accepted_lastz_versions:
-        raise readtools.InputValidationError("[alignreads] Wrong version of LASTZ detected. Version found: '%s'.  Compatible Versions: '%s'" %\
-                                             (lastz_version, ", ".join(accepted_lastz_versions)))
-except:
-    logger.fatal('An unknown error occured during validation of LASTZ:')
-    raise
-logger.debug('Checking version of lastz complete.')
-######
+# Option parsing ====================================================================================
+if os.path.split(options.lastz_location)[-1] != "lastz":
+	options.lastz_location = os.path.join(options.lastz_location, "lastz")
+if os.path.split(options.nucmer_location)[-1] != "nucmer":
+	options.nucmer_location = os.path.join(options.nucmer_location, "nucmer")
 
-### Nucmer Version Verification ###
-logger.debug('Checking version of nucmer...')
+
+# YASRA path verification ===========================================================================
+logger.debug('Checking for YASRA...')
 try:
-    process = Popen([configuration.nucmer_location, "-v"], stdout=PIPE, stderr=STDOUT)
-    process.wait()
-    nucmer_output = process.stdout.read()
+    test_program_path = os.path.join(options.yasra_location, "trim_assembly")
+    test_output = check_output([test_program_path, "-h"], stderr = STDOUT)
+    if options.yasra_location == "": # could be in PATH or cwd
+        try:
+            which_output = check_output(["which", "trim_assembly"], stderr = STDOUT).strip()
+        except CalledProcessError as not_found:
+            options.yasra_location = os.getcwd() #if it is not in path, but was still found, it must be in cwd
+        else:
+            options.yasra_location = os.path.split(which_output)[0]
+except Exception as error:
+    logger.fatal('YASRA executable cannot be found. Make sure the YASRA executables are in your PATH or reinstall alignreads.')
+    logger.debug('Exception:\n%s' % error.child_traceback)
+    sys.exit(0)
+logger.debug('YASRA executable found at %s.' % options.yasra_location)
+
+
+# Lastz path verification ===========================================================================
+logger.debug('Checking for lastz...')
+try:
+    lastz_output = check_output([options.lastz_location, "-v"], stderr = STDOUT)
+except CalledProcessError as error:
+    version_search = re.search('version ([0123456789.]*) ', error.output)
+    if version_search == None:
+        logger.fatal('LASTZ cannot be found. Make sure LASTZ is in your PATH or reinstall alignreads.')
+        sys.exit(0)
+    else:
+        lastz_version = version_search.group(1)
+except Exception as error:
+    logger.fatal('LASTZ cannot be found. Make sure LASTZ is in your PATH or reinstall alignreads.')
+    logger.debug('Exception:\n%s' % error.__dict__)
+    sys.exit(0)
+logger.debug('Version %s of LASTZ found at %s.' % (lastz_version, options.lastz_location))
+
+
+# Nucmer path verification ===========================================================================
+logger.debug('Checking for nucmer...')
+try:
+    nucmer_output = check_output([options.nucmer_location, "-v"], stderr = STDOUT)
     nucmer_version = re.search('version ([0123456789.]*)', nucmer_output).group(1)
-    if nucmer_version not in accepted_nucmer_versions:
-        raise readtools.InputValidationError("Wrong version of LASTZ detected. Version found: '%s'.  Compatible Versions: '%s'" %\
-                                             (nucmer_version, ", ".join(accepted_nucmer_versions)))
-except:
-    logger.fatal("An unknown error occured during validation of nucmer:")
-    raise
-logger.debug('Checking version of nucmer complete.')
-######
+except  Exception as error:
+    logger.fatal('nucmer cannot be found. Make sure nucmer is in your PATH or reinstall alignreads.')
+    logger.debug('Exception:\n%s' % error.child_traceback)
+    sys.exit(0)
+logger.debug('Version %s of LASTZ found at %s.' % (nucmer_version, options.nucmer_location))
+
 
 ### Execution of Runyasra ###
 try:

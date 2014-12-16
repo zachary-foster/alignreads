@@ -408,7 +408,6 @@ elif arguments.lastz is None:
 		raise TypeError('Cannot locate lastz. Specify location using option --lastz or omit option to download and install automatically.')
 	else:
 		print "Found lastz %s at %s" % (lastz_version, arguments.lastz)
-generic_program_validation(arguments.lastz, accepted_lastz_versions)
 
 if arguments.yasra is False:
 	install_yasra(arguments.install_path, executable_path=arguments.executable_path, interactive=arguments.interactive)
@@ -423,16 +422,15 @@ elif arguments.nucmer is None:
 		raise TypeError('Cannot locate nucmer. Specify location using option --nucmer.')
 	else:
 		print "Found nucmer %s at %s" % (nucmer_version, arguments.nucmer)
-generic_program_validation(arguments.nucmer, accepted_nucmer_versions)
 
 #Modify Default Configuration File
 config_path = os.path.join(arguments.install_path, 'default_configuration.py')
 with open(config_path, 'r') as config_handle:
 	config = config_handle.read()
-config = config.replace('yasra_location = None', 'yasra_location = "%s"' % arguments.yasra)
-config = config.replace('nucmer_location = None', 'nucmer_location = "%s"' % arguments.nucmer)
-config = config.replace('python_location = None', 'python_location = "%s"' % arguments.python)
-config = config.replace('lastz_location = None', 'lastz_location = "%s"' % arguments.lastz)
+config = config.replace('yasra_location = ""', 'yasra_location = "%s"' % arguments.yasra)
+config = config.replace('nucmer_location = ""', 'nucmer_location = "%s"' % arguments.nucmer)
+config = config.replace('python_location = ""', 'python_location = "%s"' % arguments.python)
+config = config.replace('lastz_location = ""', 'lastz_location = "%s"' % arguments.lastz)
 with open(config_path, 'w') as config_handle:
 	config_handle.write(config) 
 

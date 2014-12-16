@@ -8,8 +8,8 @@ read_type = "solexa"
 read_orientation = "circular"
 percent_identity = "same"
 single_step = False
-yasra_location = None
-lastz_location = None
+yasra_location = ""
+lastz_location = ""
 external_makefile = False
 ######
 
@@ -33,8 +33,8 @@ quality_read_filter = None
 depth_position_masking = None
 proportion_base_filter = None
 depth_position_filter = None 
-nucmer_location = None
-python_location = None
+nucmer_location = ""
+python_location = ""
 ######
 
 yasra_subfolder_name = 'YASRA_related_files'
@@ -45,5 +45,4 @@ execution_info_file_name = 'Execution_info.txt'
 temporary_file_location = None
 temporary_file_prefix = 'alignreads_temporary_'
 temporary_log_file_suffix = 'log.txt'
-
 

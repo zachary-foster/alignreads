@@ -25,8 +25,8 @@ logger = logging.getLogger('')
 ###Variable Initialization############################################################################################################################
 timeStamp = datetime.now().ctime().replace(' ','-')  #Ex: 'Mon-Jun-14-11:08:55-2010'
 commandLine = copy.deepcopy(sys.argv)
-defaultYasraPath = '/smokey/bin/YASRA'
-defaultLastzPath = 'lastz'
+defaultYasraPath = '/usr/bin'
+defaultLastzPath = '/usr/bin'
 cwd = os.getcwd()
 program_name, program_version, progArgNum = ('runyasra','2.2.3', 2)
 progUsage = 'python %s <Reads> <Reference> [options]' % program_name
@@ -51,9 +51,9 @@ if '--touch' not in commandLine:
                                   help="Continuity ((match + mismatch) * 100.0 / (match + mismatch + gaps)) between contigs to be merged. (Defalt: 95)")
         cmndLineParser.add_option('-m', '--makefile-path',      action='store',         default=None,       type='string',  metavar='PATH',\
                                   help="Specify path to external makefile used by YASRA. (Default: use the makefile built in to runyasra)")
-        cmndLineParser.add_option('-b', '--yasra-binary-path',  action='store',         default=None,       type='string',  metavar='PATH',\
+        cmndLineParser.add_option('-b', '--yasra-binary-path',  action='store',         default = defaultYasraPath,       type='string',  metavar='PATH',\
                                   help="Specify the path YASRA's folder. (Default: %s)" % defaultYasraPath)
-        cmndLineParser.add_option('-z', '--lastz-binary-path',  action='store',         default='',       type='string',  metavar='PATH',\
+        cmndLineParser.add_option('-z', '--lastz-binary-path',  action='store',         default = defaultLastzPath,       type='string',  metavar='PATH',\
                                   help="Specify the path to lastz. (Default: lastz)")
         cmndLineParser.add_option('-s', '--single-step',        action='store_true',    default=False,\
                                   help="Activate yasra's single_step option (Default: run yasra normally)")
@@ -75,8 +75,6 @@ if '--touch' not in commandLine:
             sys.exit(0)
         if len(args) - 1 != progArgNum:
             raise TypeError('%s takes exactly %d argument(s); %d supplied' % (program_name, progArgNum, len(args) - 1), 0)
-        if options.yasra_binary_path is None:
-            options.yasra_binary_path = defaultYasraPath
         readsPath = os.path.join(cwd, args[-2])
         refPath = os.path.join(cwd, args[-1])
         if os.path.exists(readsPath) == False:
@@ -113,7 +111,10 @@ if '--touch' not in commandLine:
         print "An error occured during validation of input files:\n%s" % sys.exc_info()[0]
         raise
     ######################################################################################################################################################
-
+    
+    # Parse options =================================================================================
+    if not options.yasra_binary_path.endswith("/"): options.yasra_binary_path += "/"
+    
     ###Initialize output directory########################################################################################################################
     try:
         os.mkdir(outDirPath)   #create output directory
@@ -131,7 +132,7 @@ if '--touch' not in commandLine:
         print "An error occured during creation of symbolic links to input file:\n%s" % sys.exc_info()[0]
         raise
     ######################################################################################################################################################
-
+    print options
     ###Makefile Creation##################################################################################################################################
     try:
         if options.makefile_path is None:
@@ -266,7 +267,7 @@ step1:
 ''' +'\t'+ '''make assemble_hits T=$(TEMPLATE) P="$Q" V=70 N=1
 
 step2:
-''' +'\t'+ '''$C/genomewalker Assembly1 hits_$(TEMPLATE) $(TEMPLATE)
+''' +'\t'+ '''$Cgenomewalker Assembly1 hits_$(TEMPLATE) $(TEMPLATE)
 ''' +'\t'+ '''@rm Assembly* hits* template[0-9]* 
 
 step3:
@@ -274,17 +275,17 @@ step3:
 ''' +'\t'+ options.lastz_binary_path + ''' template[multi] $(READS)[nameparse=${names}] $R \\
 ''' +'\t\t'+ '''--coverage=70 --ambiguous=iupac \\
 ''' +'\t\t'+ '''--format=general:name1,zstart1,end1,text1,name2,strand2,zstart2,end2,text2,nucs2 |\\
-''' +'\t'+ '''$C/best_hit -u |\
+''' +'\t'+ '''$Cbest_hit -u |\
 ''' +'\t'+ '''sort -k 1,1 -k 2,2n -k 3,3n > hits_template
 ''' +'\t'+ options.lastz_binary_path + ''' template[multi] $(READS)[nameparse=${names}] --yasra85short \\
 ''' +'\t\t'+ '''--coverage=50 --ambiguous=iupac \\
 ''' +'\t\t'+ '''--format=general:name1,zstart1,end1,text1,name2,strand2,zstart2,end2,text2,nucs2 |\\
-''' +'\t'+ '''$C/best_hit -u |\\
+''' +'\t'+ '''$Cbest_hit -u |\\
 ''' +'\t'+ '''sort -k 1,1 -k 2,2n -k 3,3n > rejects_template
 
 step4:
-''' +'\t'+ '''$C/trim_assembly template hits_template rejects_template > AssemblyX
-''' +'\t'+ '''$C/make_template AssemblyX noends $(MAKE_TEMPLATE) > final_template
+''' +'\t'+ '''$Ctrim_assembly template hits_template rejects_template > AssemblyX
+''' +'\t'+ '''$Cmake_template AssemblyX noends $(MAKE_TEMPLATE) > final_template
 ''' +'\t'+ '''@rm AssemblyX template 
 ''' +'\t'+ '''@rm hits_template rejects_template
 ''' +'\t'+ '''
@@ -293,17 +294,17 @@ step5:
 ''' +'\t'+ '''@rm final_template 
 ''' +'\t'+ '''
 stepx:
-''' +'\t'+ '''$C/make_template Assembly$W $(MAKE_TEMPLATE)> template$X
+''' +'\t'+ '''$Cmake_template Assembly$W $(MAKE_TEMPLATE)> template$X
 ''' +'\t'+ '''make assemble_hits T=template$X P="$R" V=70 N=$X
 
 assemble_hits:
 ''' +'\t'+ options.lastz_binary_path + ''' $T[multi] $(READS)[nameparse=${names}] $P \\
 ''' +'\t\t'+ '''--coverage=$V --ambiguous=iupac \\
 ''' +'\t\t'+ '''--format=general:name1,zstart1,end1,text1,name2,strand2,zstart2,end2,text2,nucs2 |\\
-''' +'\t'+ '''$C/best_hit -u |\\
+''' +'\t'+ '''$Cbest_hit -u |\\
 ''' +'\t'+ '''sort -k 1,1 -k 2,2n -k 3,3n > hits_$T
-''' +'\t'+ '''$C/assembler -o -c -h hits_$T > Assembly_$N
-''' +'\t'+ '''$C/genomewelder $(CIRCULAR) -n ''' + str(options.contig_overlap) + ''' -i ''' + str(options.overlap_percent_identity) + ''' -c ''' + str(options.overlap_continuity) + ''' Assembly_$N > Assembly$N
+''' +'\t'+ '''$Cassembler -o -c -h hits_$T > Assembly_$N
+''' +'\t'+ '''$Cgenomewelder $(CIRCULAR) -n ''' + str(options.contig_overlap) + ''' -i ''' + str(options.overlap_percent_identity) + ''' -c ''' + str(options.overlap_continuity) + ''' Assembly_$N > Assembly$N
 
 single_step:
 ''' +'\t'+ '''make final_assembly T=$(TEMPLATE) P="$Q" V=70
@@ -312,9 +313,9 @@ final_assembly:
 ''' +'\t'+ options.lastz_binary_path + ''' $T[multi] $(READS)[nameparse=${names}] $P \\
 ''' +'\t\t'+ '''--coverage=$V --ambiguous=iupac \\
 ''' +'\t\t'+ '''--format=general:name1,zstart1,end1,text1,name2,strand2,zstart2,end2,text2,nucs2 |\\
-''' +'\t'+ '''$C/best_hit -u |\\
+''' +'\t'+ '''$Cbest_hit -u |\\
 ''' +'\t'+ '''sort -k 1,1 -k 2,2n -k 3,3n |\\
-''' +'\t'+ '''$C/assembler -r -o -c \\
+''' +'\t'+ '''$Cassembler -r -o -c \\
 ''' +'\t\t'+ '''-h /dev/stdin \\
 ''' +'\t\t'+ '''-s alignments.sam \\
 ''' +'\t\t'+ '''-a contigs.ace > Final_Assembly
