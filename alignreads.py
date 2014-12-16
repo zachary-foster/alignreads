@@ -18,6 +18,7 @@ def import_file(full_path_to_module, name=None):
         module_dir, module_file = os.path.split(full_path_to_module)
         module_name, module_ext = os.path.splitext(module_file)
         save_cwd = os.getcwd()
+        if module_dir == '': module_dir = os.getcwd()
         os.chdir(module_dir)
         module_obj = __import__(module_name)
         module_obj.__file__ = full_path_to_module
@@ -171,6 +172,8 @@ if "--config-file" in sys.argv:
         raise TypeError('No config-file argument found')
 else:
     configuration_path = os.path.join(os.path.split(sys.argv[0])[0], "default_configuration.py")
+    print sys.argv
+    print configuration_path
 import_file(configuration_path, name="configuration")
 ######
 
