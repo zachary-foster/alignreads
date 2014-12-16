@@ -34,7 +34,7 @@ In the examples below, replace terms between < and > with values appropriate to 
 
 #### Downloading alignreads
 
-Alignreads releases are available from Git Hub at `https://github.com/zachary-foster/alignreads/releases`.
+Alignreads releases are available from Git Hub at https://github.com/zachary-foster/alignreads/releases.
 The `wget` Linux command can be used to download a release from the command line:
 
 ```
