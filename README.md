@@ -1,4 +1,4 @@
-## Alignreads
+# Alignreads
 
 Alignreads is a wrapper for YASRA (http://www.bx.psu.edu/miller_lab/). 
 The principal function of alignreads is to facilitate easy execution of 
@@ -25,14 +25,14 @@ the Miller lab.
 Alignreads was created by Zachary Foster at Oregon State University in 
 the Liston lab. 
 
-### Installation
+## Installation
 
 Alignreads has an installation script that attempts to download and install all dependencies where possible. 
 This automatic installation should work on most system configurations with access to the internet and common compiling software (e.g. `gcc`)
 
 In the examples below, replace terms between < and > with values appropriate to your system and needs:
 
-#### Downloading alignreads
+### Downloading alignreads
 
 Alignreads releases are available from Git Hub at https://github.com/zachary-foster/alignreads/releases.
 The `wget` Linux command can be used to download a release from the command line:
@@ -47,7 +47,7 @@ You can also download the current development version of alignreads using `git`:
 git clone https://github.com/zachary-foster/alignreads
 ```
 
-#### Unpacking the release 
+### Unpacking the release 
 
 Use `tar` to unpack the alignreads directory:
 
@@ -56,7 +56,7 @@ tar -xvf <version to install>.tar.gz
 cd <version to install>.tar.gz
 ```
 
-#### Installer help information
+### Installer help information
 
 To see what options are available for the installation process, run the installation script without any arguments: 
 
@@ -64,7 +64,7 @@ To see what options are available for the installation process, run the installa
 python install.py
 ```
 
-#### Running the interactive installer
+### Running the interactive installer
 
 By default, the installer allows you to interactively choose which version of dependencies to install and attempts to download and install them:
 
@@ -75,7 +75,7 @@ python install.py <path to installation location>
 The `<path to installation location>` will be the where alignreads will be installed. 
 A folder named `alignreads` will be created there.
 
-#### Non-interactive installation
+### Non-interactive installation
 
 Alternatively, to automatically install the recommended versions of dependencies non-interactively, the `-i` / `--not-interactive` option can be used:
 
@@ -83,7 +83,7 @@ Alternatively, to automatically install the recommended versions of dependencies
 python install.py -i <path to installation location>
 ```
 
-#### Using currently installed dependecies 
+### Using currently installed dependecies 
 
 If some of the dependencies are already installed on you system, you can use those versions by including the corresponding installer option (See installer help menu). 
 If the already-installed dependencies are in your `PATH` (i.e. you can use them from the command line in any directory), just supply the corresponding option without arguments.
