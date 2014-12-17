@@ -272,7 +272,7 @@ I recommend looking over the `nucmer` documentation (http://mummer.sourceforge.n
 
 Alignreads makes a consensus of all of the aligned contigs.
 There are a few options that are almost essential for this process to work correctly. 
-All of the following options accept a range of numbers in the format  <min>-<max> (e.g. `5-10`), inclusive.
+All of the following options accept a range of numbers in the format  `<min>-<max>` (e.g. `5-10`), inclusive.
 The <min> or the <max> can be left out to indicate no minimum/maximum limit (e.g. `5-` means "at least five").
 Multiple ranges can be specified if separated by commas (e.g. `1-3,100-` means "one to three or over 100").
 
@@ -312,4 +312,18 @@ For example, to remove indels that occur less than 5% of the time:
 
 ```
 alignreads reads.fa reference.fa -d 0.05-
+```
+
+
+### Making multiple consensus sequences per assembly
+
+Running YASRA can take a long time whereas aligning the contigs and making a consensus sequence is relativly quick.
+This means that alot of time can be wasted optimizing contig alignment and consensus generation parameters if a new assembly is done each try.
+Therefore, it is possible to redo everything downstream of the assembly step with different options by supplying `alignreads` with the path to a previously-generated output directory instead of the read and reference file. 
+A new sub-directory will be created within the old output directory for each new run. 
+
+For example, to make a new consensus from a previous assembly stored in alignreads output directory named `454.fa_rhino_template.fa_Wed-Dec-17-15:36:23-2014`:
+
+```
+alignreads 454.fa_rhino_template.fa_Wed-Dec-17-15:36:23-2014 -d 0.15-
 ```
