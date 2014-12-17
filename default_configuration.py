@@ -1,5 +1,5 @@
 #This file is used to store default parameters for every option of alignreads.
-#DO NOT modify the copy of this file in the installation directory, HOWEVER you are encouraged to make copies of this file and customize them to suit specific tasks. 
+#Modifying this file is not recommended, however you are encouraged to make copies of this file and customize them to suit specific tasks. 
 #Files of this type are referenced by alignreads, but are independent of any one installation of alignreads. 
 
 ### YASRA Options ###
