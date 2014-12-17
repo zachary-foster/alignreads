@@ -103,7 +103,7 @@ python install.py --lastz <path to lastz> <path to installation location>
 
 The installation of alignreads contains a executable shell script that simply executes alignreads with a specified instance of `python`. 
 This shell script allows for alignreads to be run by typing `alignreads` instead of `python alignreads.py`.
-It is often convienent to put this executable in your shell's search path, so that typing `alignreads` runs the program regardless of current working directory.
+It is often convenient to put this executable in your shell's search path, so that typing `alignreads` runs the program regardless of current working directory.
 
 How this is done depends on what shell you are using. 
 To find out what shell you are using, paste the following command into your terminal:
@@ -147,7 +147,7 @@ setenv PATH $PATH:/home/fosterz/alignreads
 
 ## Running alignreads
 
-Alignreads has an intimidating amount of arguments because it gives access to the arguments of its constiuent programs.
+Alignreads has an intimidating amount of arguments because it gives access to the arguments of its constituent programs.
 However, most of these arguments are rarely used.
 Running alignreads without arguments will print a help menu with all the options and their default values.
 
@@ -161,14 +161,48 @@ alignreads reads.fa reference.fa
 In most cases, at least some options should be used.
 Examples and explanations of commonly needed options follow.
 
+### General alignreads options
+
+**-y / --output-directory**
+
+Specify the location of the output directory. 
+By default, alignreads creates an output directory for each run in the current working directory.
+
+For example, to create the output directory in the folder `~/my_assemblies` regardless of current working directory:
+
+```
+alignreads reads.fa reference.fa --output-directory ~/my_assemblies
+```
+
+**-c / --config-file** 
+
+Alignreads uses a configuration file to specify the default values of all options. 
+The configuration file is simply a python script that defines variables. 
+The default configuration file is located in the installed alignreads folder and is called `default_configuration.py`. 
+You can make copies of this file and change the values to specify your own defaults for different tasks.
+
+For example, to use a configuration file called `bacterial_configuration.py` that specifies the default option values for assembling bacterial genomes:
+
+```
+alignreads reads.fa reference.fa --config-file bacterial_configuration.py
+```
+
+Any other options used on the command line will override the defaults in the configuration file if used together.
+
+For example, say you are only assembling a specific part of a bacterial genome (i.e. not circular). You could run:
+
+```
+alignreads reads.fa reference.fa --config-file bacterial_configuration.py -o linear
+```
+
 ### Contig assembly options
 
-**-a / --single-step***
+**-a / --single-step**
 
 YASRA uses an iterative process to improve assemblies.
-If additional iterations after the first do not imporve the assembly YASRA throws an error. 
+If additional iterations after the first do not improve the assembly YASRA throws an error. 
 If this happens, you have to use the `-a` / `--single-step` option to prevent the error. 
-A future goal is to circumvent this inconvienent behavior. 
+A future goal is to circumvent this inconvenient behavior. 
 
 For example:
 
@@ -211,7 +245,7 @@ For 454:
 * `medium      : about 90% identity between target & reference
 * `low`        : about 85% identity between target & reference
 * `verylow`    : about 75% identity between target & reference
-* `desperate`  : realy low identity (rather slow)
+* `desperate`  : really low identity (rather slow)
 
 For Solexa/Illumina:
 
@@ -223,4 +257,59 @@ For example, to assemble Illumina reads with a closely related reference:
 
 ```
 alignreads reads.fa reference.fa -t solexa -p same
+```
+
+
+### Contig alignment options 
+
+The program `nucmer` from the MUMmer tool kit is used to align contigs produced by YASRA to the reference. 
+`nucmer` has many options that control this process. 
+To fully understand the effects of the options, a understanding of how `nucmer` works is needed.
+I recommend looking over the `nucmer` documentation (http://mummer.sourceforge.net/manual/#nucmer). 
+
+
+### Consensus generation options 
+
+Alignreads makes a consensus of all of the aligned contigs.
+There are a few options that are almost essential for this process to work correctly. 
+All of the following options accept a range of numbers in the format  <min>-<max> (e.g. `5-10`), inclusive.
+The <min> or the <max> can be left out to indicate no minimum/maximum limit (e.g. `5-` means "at least five").
+Multiple ranges can be specified if separated by commas (e.g. `1-3,100-` means "one to three or over 100").
+
+**-g / --quality-read-filter**
+
+The acceptable quality scores for reads.
+Reads outside this range will not be included in the consensus sequences.
+
+**-m / --depth-position-masking**
+
+The range(s) of acceptable read depth.
+Positions outside this range will be masked in the consensus sequences.
+
+For example, to mask all positions with less than 10 read depth in the consensus sequence:
+
+```
+alignreads reads.fa reference.fa -m 10-
+```
+
+**-b / --proportion-base-filter**
+
+The acceptable range(s) for the proportion of bases at a given position that support a given call.
+Nucleotides with proportions outside of this range will be ignored when condensing the position to an IUPAC character in the consensus.
+
+For example, to ignore all SNPs that have a less than 10% frequency:
+
+```
+alignreads reads.fa reference.fa -b 0.1-
+```
+
+**-d / --depth-position-filter**
+
+Set the depth range(s) for position filtering.
+Positions outside this range will not be included in the consensus sequences.
+
+For example, to remove indels that occur less than 5% of the time:
+
+```
+alignreads reads.fa reference.fa -d 0.05-
 ```
