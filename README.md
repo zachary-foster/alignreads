@@ -98,3 +98,51 @@ If a dependency is installed, but not in `PATH`, then give the corresponding opt
 ```
 python install.py --lastz <path to lastz> <path to installation location>
 ```
+
+### Putting alignreads in your shell's search path
+
+The installation of alignreads contains a executable shell script that simply executes alignreads with a specified instance of `python`. 
+This shell script allows for alignreads to be run by typing `alignreads` instead of `python alignreads.py`.
+It is often convienent to put this executable in your shell's search path, so that typing `alignreads` runs the program regardless of current working directory.
+
+How this is done depends on what shell you are using. 
+To find out what shell you are using, paste the following command into your terminal:
+
+```
+ps -p $$ -o cmd=
+```
+
+#### For Bash/Sh/Ksh
+
+In your home directory, there should be a `.bashrc` or `.profile` file depending on your system.
+This file contains a list of bash commands that are run each time `bash` is run (i.e. a terminal is opened).
+To put alignreads in your search path permanently, add something like the following line to the end of that file. 
+
+```
+export PATH="$PATH:<path to installation>"
+```
+
+Here is an example of the line I would add to `.bashrc` if I installed alignreads in `/home/fosterz` on my system.
+
+```
+export PATH="$PATH:/home/fosterz/alignreads"
+```
+
+
+#### For Csh/Tcsh
+
+In your home directory, there should be a `.cshrc` or `.login` file, depending on your system.
+This file contains a list of csh commands that are run each time `csh` is run.
+To put alignreads in your search path permanently, add something like the following line to the end of that file. 
+
+```
+setenv PATH $PATH:<path to installation>
+```
+
+Here is an example of the line I would add to `.cshrc` if I installed alignreads in `/home/fosterz` on my system.
+
+```
+setenv PATH $PATH:/home/fosterz/alignreads
+```
+
+
