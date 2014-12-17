@@ -112,7 +112,7 @@ To find out what shell you are using, paste the following command into your term
 ps -p $$ -o cmd=
 ```
 
-#### For Bash/Sh/Ksh
+**For Bash/Sh/Ksh:**
 
 In your home directory, there should be a `.bashrc` or `.profile` file depending on your system.
 This file contains a list of bash commands that are run each time `bash` is run (i.e. a terminal is opened).
@@ -129,7 +129,7 @@ export PATH="$PATH:/home/fosterz/alignreads"
 ```
 
 
-#### For Csh/Tcsh
+**For Csh/Tcsh:**
 
 In your home directory, there should be a `.cshrc` or `.login` file, depending on your system.
 This file contains a list of csh commands that are run each time `csh` is run.
@@ -145,4 +145,82 @@ Here is an example of the line I would add to `.cshrc` if I installed alignreads
 setenv PATH $PATH:/home/fosterz/alignreads
 ```
 
+## Running alignreads
 
+Alignreads has an intimidating amount of arguments because it gives access to the arguments of its constiuent programs.
+However, most of these arguments are rarely used.
+Running alignreads without arguments will print a help menu with all the options and their default values.
+
+The simplest alignreads command possible uses default values for all of the options. 
+For example, to assemble reads in a fasta file named `read.fa` using a reference in a file called `reference.fa`, assuming both files are in the current working directory and alignreads is in your shell's search path, type:
+
+```
+alignreads reads.fa reference.fa
+```
+
+In most cases, at least some options should be used.
+Examples and explanations of commonly needed options follow.
+
+### Contig assembly options
+
+**-a / --single-step***
+
+YASRA uses an iterative process to improve assemblies.
+If additional iterations after the first do not imporve the assembly YASRA throws an error. 
+If this happens, you have to use the `-a` / `--single-step` option to prevent the error. 
+A future goal is to circumvent this inconvienent behavior. 
+
+For example:
+
+```
+alignreads reads.fa reference.fa --single-step
+```
+
+**-t / --read-type**
+
+The type of reads, either `454` or `solexa`. 
+* `454`: longer, less accurate Roche 454 pyrosequencer reads. 
+* `solexa`: shorter, more accurate Illumina reads. 
+
+For example, if the reads being used were produced by an Illumina HiSeq:
+
+```
+alignreads reads.fa reference.fa -t solexa
+```
+
+**-o / --read-orientation**
+
+Whether the thing being assembled is a `linear` or `circular` DNA molecule.
+
+For example, if a chromosome is being assembled:
+
+```
+alignreads reads.fa reference.fa -o linear
+```
+
+**-p / --percent-identity**
+
+How similar the reference is to the sequence being assembled. 
+The interpretation of this option is effected by `--read-type`.
+Possible values are listed below.
+
+For 454:
+
+* `same`       : about 98% identity between target & reference
+* `high`       : about 95% identity between target & reference
+* `medium      : about 90% identity between target & reference
+* `low`        : about 85% identity between target & reference
+* `verylow`    : about 75% identity between target & reference
+* `desperate`  : realy low identity (rather slow)
+
+For Solexa/Illumina:
+
+* `same`        : about 95% identity between target & reference
+* `medium`      : about 85% identity between target & reference
+* `desperate`   : low scores (rather slow)
+
+For example, to assemble Illumina reads with a closely related reference:
+
+```
+alignreads reads.fa reference.fa -t solexa -p same
+```
