@@ -332,7 +332,7 @@ alignreads 454.fa_rhino_template.fa_Wed-Dec-17-15:36:23-2014 -d 0.15-
 ## Alignreads output
 
 Alignreads produces an output directory with a name composed of the names of the read and reference file and a time stamp. 
-This is created in current working directory unless the **-y / --output-directory** option is used. 
+This is created in current working directory unless the `-y / --output-directory` option is used. 
 The output directory contains a sub-directory `YASRA_related_files` that contains files produced by and associated with YASRA.
 The output directory also contains at least one directory called `alignment_#` that contains all the post-assembly files. 
 Multiple `alignment_#` sub-directories can exist of the post-assembly analysis is run multiple times.
