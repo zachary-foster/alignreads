@@ -317,8 +317,8 @@ alignreads reads.fa reference.fa -d 0.05-
 
 ### Making multiple consensus sequences per assembly
 
-Running YASRA can take a long time whereas aligning the contigs and making a consensus sequence is relativly quick.
-This means that alot of time can be wasted optimizing contig alignment and consensus generation parameters if a new assembly is done each try.
+Running YASRA can take a long time whereas aligning the contigs and making a consensus sequence is relatively quick.
+This means that a lot of time can be wasted optimizing contig alignment and consensus generation parameters if a new assembly is done each try.
 Therefore, it is possible to redo everything downstream of the assembly step with different options by supplying `alignreads` with the path to a previously-generated output directory instead of the read and reference file. 
 A new sub-directory will be created within the old output directory for each new run. 
 
@@ -327,3 +327,31 @@ For example, to make a new consensus from a previous assembly stored in alignrea
 ```
 alignreads 454.fa_rhino_template.fa_Wed-Dec-17-15:36:23-2014 -d 0.15-
 ```
+
+
+## Alignreads output
+
+Alignreads produces an output directory with a name composed of the names of the read and reference file and a time stamp. 
+This is created in current working directory unless the **-y / --output-directory** option is used. 
+The output directory contains a sub-directory `YASRA_related_files` that contains files produced by and associated with YASRA.
+The output directory also contains at least one directory called `alignment_#` that contains all the post-assembly files. 
+Multiple `alignment_#` sub-directories can exist of the post-assembly analysis is run multiple times.
+
+**YASRA_related_files** contents:
+
+* `alignments_reads.fa_reference.fa.sam` : SAM file of how the reads align to each contig
+* `Command_Line_Record.txt` : The command line used to produce the assembly
+* `contigs_reads.fa_reference.fa.ace` : ACE file containing read and contig information
+* `Final_Assembly_reads.fa_reference.fa` : FASTA file of contigs
+* `Makefile` : Used to run YASRA
+* link to read file
+* link to reference file
+
+**alignment_#** contents:
+
+* `alignments_reads.fa_reference.fa.sam.fa` : FASTA file of aligned contigs
+* `alignments_reads.fa_reference.fa.sam.fa_aligned.fa` : FASTA file of aligned consensus sequence, reference, and contigs
+* `alignments_454.fa_rhino_template.fa.sam.fa.delta` : File produced by nucmer indicating alignments
+* `Execution_info.txt` : Info on parameters used and run-time log
+* `nucmer_standard_error.txt` : Nucmer standard error output.
+* `nucmer_standard_output.txt` : Nucmer standard out output.
