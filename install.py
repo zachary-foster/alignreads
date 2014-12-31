@@ -437,7 +437,7 @@ with open(config_path, 'w') as config_handle:
 #Create Shell Script to Run Alignreads
 alignreads_location = os.path.join(arguments.install_path, 'alignreads.py')
 shell_script_location = os.path.join(arguments.install_path, 'alignreads')
-shell_text = '#!/bin/csh\n%s %s $*\n' % (arguments.python, alignreads_location)
+shell_text = '#!/bin/bash\n%s %s $*\n' % (arguments.python, alignreads_location)
 with open(shell_script_location, 'w') as shell_handle:
 	shell_handle.write(shell_text)
 subprocess.call(['chmod', '+x', shell_script_location], stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
