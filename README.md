@@ -145,6 +145,14 @@ Here is an example of the line I would add to `.cshrc` if I installed alignreads
 setenv PATH $PATH:/home/fosterz/alignreads
 ```
 
+**Adding to PATH without a text editor**
+
+If you want a one-line solution or dont want to use a command line text editor to make your changes to the shell configuration file, you can `cd` into the directory you want to add to your shell's search path and type:
+
+`echo "export PATH=$(pwd):\${PATH}" >> ~/.bashrc`
+
+This example assumes you are using `bash`, but something similar can be used for other shells as well. 
+
 ## Running alignreads
 
 Alignreads has an intimidating amount of arguments because it gives access to the arguments of its constituent programs.
